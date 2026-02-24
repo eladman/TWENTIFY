@@ -3,13 +3,33 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { fontsToLoad } from '@/theme/typography';
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+  DMSans_800ExtraBold,
+} from '@expo-google-fonts/dm-sans';
+import {
+  IBMPlexMono_400Regular,
+  IBMPlexMono_500Medium,
+  IBMPlexMono_600SemiBold,
+} from '@expo-google-fonts/ibm-plex-mono';
 import { colors } from '@/theme/colors';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts(fontsToLoad);
+  const [fontsLoaded, fontError] = useFonts({
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
+    DMSans_800ExtraBold,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+  });
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -28,37 +48,21 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: colors.background },
-          animation: 'fade',
         }}
       >
-        <Stack.Screen name="index" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="workout/[id]"
-          options={{
-            presentation: 'fullScreenModal',
-            gestureEnabled: false,
-          }}
-        />
-        <Stack.Screen
-          name="workout/summary"
           options={{ presentation: 'modal' }}
         />
         <Stack.Screen
           name="run/active"
-          options={{
-            presentation: 'fullScreenModal',
-            gestureEnabled: false,
-          }}
-        />
-        <Stack.Screen
-          name="run/summary"
           options={{ presentation: 'modal' }}
         />
         <Stack.Screen
           name="exercise/[id]"
-          options={{ presentation: 'modal' }}
+          options={{ presentation: 'transparentModal' }}
         />
         <Stack.Screen
           name="paywall"
