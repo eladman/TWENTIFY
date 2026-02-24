@@ -119,12 +119,12 @@ export const fontFamilies = {
    * ```
    */
   export const fontsToLoad = {
-    DMSans_400Regular: require('@expo-google-fonts/dm-sans/DMSans_400Regular.ttf'),
-    DMSans_500Medium: require('@expo-google-fonts/dm-sans/DMSans_500Medium.ttf'),
-    DMSans_600SemiBold: require('@expo-google-fonts/dm-sans/DMSans_600SemiBold.ttf'),
-    DMSans_700Bold: require('@expo-google-fonts/dm-sans/DMSans_700Bold.ttf'),
-    DMSans_800ExtraBold: require('@expo-google-fonts/dm-sans/DMSans_800ExtraBold.ttf'),
-    IBMPlexMono_400Regular: require('@expo-google-fonts/ibm-plex-mono/IBMPlexMono_400Regular.ttf'),
-    IBMPlexMono_500Medium: require('@expo-google-fonts/ibm-plex-mono/IBMPlexMono_500Medium.ttf'),
-    IBMPlexMono_600SemiBold: require('@expo-google-fonts/ibm-plex-mono/IBMPlexMono_600SemiBold.ttf'),
+    DMSans_400Regular: require('@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.ttf'),
+    DMSans_500Medium: require('@expo-google-fonts/dm-sans/500Medium/DMSans_500Medium.ttf'),
+    DMSans_600SemiBold: require('@expo-google-fonts/dm-sans/600SemiBold/DMSans_600SemiBold.ttf'),
+    DMSans_700Bold: require('@expo-google-fonts/dm-sans/700Bold/DMSans_700Bold.ttf'),
+    DMSans_800ExtraBold: require('@expo-google-fonts/dm-sans/800ExtraBold/DMSans_800ExtraBold.ttf'),
+    IBMPlexMono_400Regular: require('@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf'),
+    IBMPlexMono_500Medium: require('@expo-google-fonts/ibm-plex-mono/500Medium/IBMPlexMono_500Medium.ttf'),
+    IBMPlexMono_600SemiBold: require('@expo-google-fonts/ibm-plex-mono/600SemiBold/IBMPlexMono_600SemiBold.ttf'),
   };
