@@ -9,7 +9,7 @@ export default function ProgressScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.container}>
         <Text variant="heading.xl">Progress</Text>
-        <Text variant="body.md" color="secondary" style={styles.subtitle}>
+        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
           Your consistency and trends will appear here.
         </Text>
       </View>

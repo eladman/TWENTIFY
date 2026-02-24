@@ -9,7 +9,7 @@ export default function RunSummaryScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Text variant="heading.xl">Run Complete</Text>
-        <Text variant="body.md" color="secondary" style={styles.subtitle}>
+        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
           Run summary will appear here.
         </Text>
       </View>

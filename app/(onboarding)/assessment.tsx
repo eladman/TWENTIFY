@@ -1,15 +1,24 @@
 import { View, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
-import { colors } from '@/theme/colors';
-import { screenPadding } from '@/theme/spacing';
+import { Button } from '@/components/ui/Button';
 
 export default function AssessmentScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
-      <Text variant="heading.xl">Quick Assessment</Text>
-      <Text variant="body.md" color="secondary" style={styles.subtitle}>
-        5 quick questions to build your plan.
-      </Text>
+      <View style={styles.content}>
+        <Text variant="heading.xl">Quick Assessment</Text>
+      </View>
+      <View style={styles.bottom}>
+        <Button
+          variant="primary"
+          label="Next"
+          onPress={() => router.push('/(onboarding)/preview')}
+          fullWidth
+        />
+      </View>
     </View>
   );
 }
@@ -17,12 +26,15 @@ export default function AssessmentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F5F5F7',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: screenPadding.horizontal,
-    backgroundColor: colors.background,
   },
-  subtitle: {
-    marginTop: 8,
+  bottom: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
 });

@@ -59,7 +59,7 @@ export function Toast({ message, visible, duration = 2000, onHide }: ToastProps)
         animatedStyle,
       ]}
     >
-      <Text variant="body.md" color="white" style={{ fontFamily: 'DMSans_500Medium' }}>
+      <Text variant="body.md" color="#FFFFFF" style={{ fontFamily: 'DMSans_500Medium' }}>
         {message}
       </Text>
     </Animated.View>

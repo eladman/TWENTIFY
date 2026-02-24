@@ -9,7 +9,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.container}>
         <Text variant="heading.xl">Profile</Text>
-        <Text variant="body.md" color="secondary" style={styles.subtitle}>
+        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
           Your settings and account will appear here.
         </Text>
       </View>

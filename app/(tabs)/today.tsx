@@ -9,7 +9,7 @@ export default function TodayScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.container}>
         <Text variant="heading.xl">Today's 20%</Text>
-        <Text variant="body.md" color="secondary" style={styles.subtitle}>
+        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
           Your plan for today will appear here.
         </Text>
       </View>

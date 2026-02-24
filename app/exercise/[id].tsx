@@ -12,7 +12,7 @@ export default function ExerciseDetailScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Text variant="heading.xl">Exercise Detail</Text>
-        <Text variant="body.md" color="secondary" style={styles.subtitle}>
+        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
           Research citations and form cues for {id} will appear here.
         </Text>
       </View>

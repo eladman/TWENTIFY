@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="favicon.svg">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 
 :root {
   --bg: #F5F5F7;
@@ -43,12 +43,12 @@ body {
 
 /* ══════════════════ UTILITIES ══════════════════ */
 .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
-.section { padding: 120px 0; position: relative; }
+.section { padding: 140px 0; position: relative; }
 .text-center { text-align: center; }
 .mx-auto { margin-left: auto; margin-right: auto; }
 
 @media (max-width: 768px) {
-  .section { padding: 80px 0; }
+  .section { padding: 88px 0; }
 }
 
 /* ══════════════════ KEYFRAMES ══════════════════ */
@@ -57,21 +57,15 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes blur-in {
-  from { filter: blur(10px); opacity: 0; transform: translateY(8px); }
+  from { filter: blur(12px); opacity: 0; transform: translateY(10px); }
   to { filter: blur(0); opacity: 1; transform: translateY(0); }
 }
 @keyframes pulse-ring {
   0% { transform: scale(1); opacity: 0.7; }
   100% { transform: scale(2.8); opacity: 0; }
 }
-@keyframes float-appear {
-  0%   { opacity: 0; transform: translateY(10px); }
-  15%  { opacity: 1; transform: translateY(0); }
-  60%  { opacity: 1; transform: translateY(-8px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.88) translateY(12px); }
+  from { opacity: 0; transform: scale(0.88) translateY(16px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 @keyframes marquee {
@@ -82,14 +76,6 @@ body {
   0% { background-position: 200% center; }
   100% { background-position: -200% center; }
 }
-@keyframes strike {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-@keyframes clip-reveal {
-  from { clip-path: inset(0 0 100% 0); opacity: 0; }
-  to { clip-path: inset(0 0 0% 0); opacity: 1; }
-}
 @keyframes star-pop {
   0% { opacity: 0; transform: scale(0.4); }
   70% { transform: scale(1.2); }
@@ -99,6 +85,14 @@ body {
   0%, 100% { box-shadow: 0 0 0 2px rgba(48,209,88,0.3), 0 4px 20px rgba(48,209,88,0.1); }
   50% { box-shadow: 0 0 0 3px rgba(48,209,88,0.45), 0 6px 28px rgba(48,209,88,0.18); }
 }
+@keyframes cta-glow {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0,113,227,0.35), 0 0 0 0 rgba(0,113,227,0.15); }
+  50% { box-shadow: 0 8px 36px rgba(0,113,227,0.45), 0 0 0 6px rgba(0,113,227,0.08); }
+}
+@keyframes stat-count {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ══════════════════ NAV ══════════════════ */
 nav {
@@ -106,23 +100,19 @@ nav {
   top: 0; left: 0; right: 0;
   z-index: 100;
   padding: 0 24px;
-  transition: all 0.4s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-nav.scrolled {
-  background: rgba(245,245,247,0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(210,210,215,0.5);
-}
+/* Default: transparent on dark hero */
 .nav-inner {
   max-width: 1080px; margin: 0 auto;
   display: flex; align-items: center;
   justify-content: space-between;
-  height: 52px;
+  height: 56px;
 }
 .nav-logo {
   display: flex; align-items: center; gap: 10px;
-  text-decoration: none; color: var(--text);
+  text-decoration: none; color: #fff;
+  transition: color 0.4s;
 }
 .nav-icon {
   width: 32px; height: 32px; border-radius: 8px;
@@ -130,60 +120,84 @@ nav.scrolled {
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-weight: 800; font-size: 13px;
 }
-.nav-name { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
+.nav-name {
+  font-weight: 700; font-size: 16px; letter-spacing: -0.3px;
+  transition: color 0.4s;
+}
 .nav-links {
   display: flex; align-items: center; gap: 32px; list-style: none;
 }
 .nav-links a {
-  font-size: 13px; color: var(--text-secondary);
-  text-decoration: none; font-weight: 500; transition: color 0.2s;
+  font-size: 13px; color: rgba(255,255,255,0.55);
+  text-decoration: none; font-weight: 500;
+  transition: color 0.3s;
 }
-.nav-links a:hover { color: var(--text); }
+.nav-links a:hover { color: #fff; }
 .nav-cta {
   background: var(--accent) !important;
   color: #fff !important;
-  padding: 8px 18px;
+  padding: 8px 20px;
   border-radius: 9999px;
   font-size: 13px !important;
   font-weight: 600 !important;
-  transition: background 0.2s !important;
+  transition: all 0.25s !important;
 }
-.nav-cta:hover { background: var(--accent-dark) !important; }
+.nav-cta:hover {
+  background: var(--accent-dark) !important;
+  transform: translateY(-1px);
+}
+
+/* Scrolled state */
+nav.scrolled {
+  background: rgba(29,29,31,0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
 
 @media (max-width: 640px) {
-  .nav-links { gap: 20px; }
+  .nav-links { gap: 18px; }
   .nav-links .hide-mobile { display: none; }
 }
 
 /* ══════════════════ HERO ══════════════════ */
 .hero {
-  padding: 140px 0 80px;
+  padding: 160px 0 100px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  background: var(--text);
 }
-/* Mesh gradient background */
+/* Subtle radial glow behind phone area */
 .hero::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 900px 600px at 30% 0%, rgba(0,113,227,0.055) 0%, transparent 65%),
-    radial-gradient(ellipse 700px 500px at 80% 20%, rgba(0,88,176,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 600px 400px at 50% 80%, rgba(0,113,227,0.03) 0%, transparent 55%);
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 600px;
+  background: radial-gradient(ellipse at center, rgba(0,113,227,0.12) 0%, transparent 70%);
   pointer-events: none;
 }
+/* Bottom gradient fade into light bg */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
 
-/* Hero badge */
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 16px 6px 8px;
   border-radius: 9999px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
   font-size: 12px; font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 28px;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 32px;
   animation: fadeUp 0.7s ease both;
 }
 .hero-badge-dot-wrap {
@@ -195,7 +209,7 @@ nav.scrolled {
   width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--success);
-  box-shadow: 0 0 6px rgba(48,209,88,0.5);
+  box-shadow: 0 0 8px rgba(48,209,88,0.6);
   position: relative; z-index: 1;
 }
 .hero-badge-dot-wrap::before,
@@ -211,14 +225,13 @@ nav.scrolled {
   animation-delay: 0.7s;
 }
 
-/* Hero h1 with blur-in words */
 .hero h1 {
-  font-size: clamp(42px, 7vw, 72px);
+  font-size: clamp(48px, 8vw, 86px);
   font-weight: 800;
-  letter-spacing: -2.5px;
-  line-height: 1.05;
-  color: var(--text);
-  margin-bottom: 20px;
+  letter-spacing: -3px;
+  line-height: 1.02;
+  color: #fff;
+  margin-bottom: 24px;
 }
 .hero h1 .word {
   display: inline-block;
@@ -226,9 +239,8 @@ nav.scrolled {
   animation: blur-in 0.65s ease forwards;
   white-space: nowrap;
 }
-/* Each word gets a delay via inline style in HTML */
 .hero h1 .accent-word {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  background: linear-gradient(135deg, #4DA8FF 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -236,7 +248,7 @@ nav.scrolled {
 
 .hero-sub {
   font-size: clamp(17px, 2.5vw, 21px);
-  color: var(--text-secondary);
+  color: rgba(255,255,255,0.45);
   max-width: 540px;
   margin: 0 auto 40px;
   line-height: 1.5;
@@ -245,13 +257,13 @@ nav.scrolled {
 }
 .hero-actions {
   display: flex; justify-content: center;
-  gap: 14px; margin-bottom: 60px;
+  gap: 14px; margin-bottom: 48px;
   animation: fadeUp 0.8s ease 0.7s both;
   flex-wrap: wrap;
 }
 .btn-primary {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 16px 32px;
+  padding: 16px 36px;
   border-radius: 9999px;
   background: var(--accent);
   color: #fff;
@@ -260,80 +272,103 @@ nav.scrolled {
   border: none; cursor: pointer;
   font-family: inherit;
   transition: all 0.25s;
-  box-shadow: 0 4px 20px rgba(0,113,227,0.28);
+  box-shadow: 0 4px 24px rgba(0,113,227,0.35);
 }
 .btn-primary:hover {
   background: var(--accent-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 28px rgba(0,113,227,0.34);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,113,227,0.45);
 }
-.btn-secondary {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 16px 32px;
-  border-radius: 9999px;
-  background: transparent;
-  color: var(--accent);
-  font-size: 16px; font-weight: 600;
-  text-decoration: none;
-  border: none; cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s;
-}
-.btn-secondary:hover { color: var(--accent-dark); }
 .btn-arrow { transition: transform 0.2s; }
-.btn-primary:hover .btn-arrow,
-.btn-secondary:hover .btn-arrow { transform: translateX(3px); }
+.btn-primary:hover .btn-arrow { transform: translateX(3px); }
+
+/* ── Hero Stat Strip ── */
+.hero-stats {
+  display: flex; justify-content: center;
+  gap: 48px;
+  margin-bottom: 56px;
+  animation: fadeUp 0.8s ease 0.85s both;
+}
+.hero-stat {
+  text-align: center;
+}
+.hero-stat-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 28px; font-weight: 700;
+  color: #fff;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.hero-stat-label {
+  font-size: 11px; color: rgba(255,255,255,0.3);
+  margin-top: 6px; font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.hero-stat-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.1);
+  align-self: stretch;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 130px 0 80px; }
+  .hero-stats { gap: 24px; }
+  .hero-stat-val { font-size: 22px; }
+  .hero-stat-label { font-size: 10px; }
+}
 
 /* ── Hero Phone ── */
 .hero-phone-wrap {
   display: flex; justify-content: center;
-  animation: scale-in 0.9s ease 0.85s both;
+  animation: scale-in 0.9s ease 1s both;
   position: relative;
+  z-index: 1;
 }
 .hero-phone {
-  width: 280px; height: 580px;
-  border-radius: 40px;
+  width: 320px; height: 660px;
+  border-radius: 44px;
   background: var(--card);
-  border: 1px solid var(--card-border);
+  border: 1px solid rgba(210,210,215,0.3);
   box-shadow:
-    0 2px 4px rgba(0,0,0,0.02),
-    0 16px 56px rgba(0,0,0,0.1),
-    0 48px 96px rgba(0,0,0,0.06),
-    0 0 0 8px rgba(0,113,227,0.04),
-    0 0 48px 8px rgba(0,113,227,0.08);
+    0 2px 4px rgba(0,0,0,0.04),
+    0 20px 60px rgba(0,0,0,0.25),
+    0 48px 100px rgba(0,0,0,0.15),
+    0 0 0 1px rgba(255,255,255,0.05),
+    0 0 80px 20px rgba(0,113,227,0.12);
   overflow: hidden;
   position: relative;
 }
 .hero-notch {
   position: absolute; top: 0; left: 50%;
   transform: translateX(-50%);
-  width: 110px; height: 28px;
+  width: 120px; height: 30px;
   background: var(--card);
-  border-radius: 0 0 18px 18px;
+  border-radius: 0 0 20px 20px;
   z-index: 5;
 }
 .hero-notch-pill {
-  position: absolute; top: 8px; left: 50%;
+  position: absolute; top: 9px; left: 50%;
   transform: translateX(-50%);
-  width: 52px; height: 5px;
+  width: 56px; height: 5px;
   border-radius: 3px;
   background: var(--card-border);
 }
 .hero-screen {
-  padding: 46px 18px 0;
+  padding: 50px 20px 0;
   height: 100%;
   display: flex; flex-direction: column;
   font-family: 'DM Sans', sans-serif;
 }
 .hs-date { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
 .hs-greeting {
-  font-size: 22px; font-weight: 700;
+  font-size: 24px; font-weight: 700;
   color: var(--text); letter-spacing: -0.5px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 .hs-card {
-  background: var(--bg); border-radius: 16px;
-  padding: 18px; flex: 1;
+  background: var(--bg); border-radius: 18px;
+  padding: 20px; flex: 1;
   display: flex; flex-direction: column;
   border: 1px solid rgba(210,210,215,0.5);
 }
@@ -343,7 +378,7 @@ nav.scrolled {
   color: var(--accent); margin-bottom: 12px;
 }
 .hs-title {
-  font-size: 18px; font-weight: 700;
+  font-size: 20px; font-weight: 700;
   color: var(--text); letter-spacing: -0.3px;
   margin-bottom: 3px;
 }
@@ -351,20 +386,20 @@ nav.scrolled {
 .hs-exercises { display: flex; flex-direction: column; gap: 0; flex: 1; }
 .hs-ex {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 9px 0; font-size: 12px;
+  padding: 10px 0; font-size: 13px;
   border-bottom: 1px solid rgba(210,210,215,0.3);
 }
 .hs-ex-name { font-weight: 500; color: var(--text); }
 .hs-ex-sets { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-secondary); }
 .hs-cta {
   background: var(--accent); color: #fff;
-  text-align: center; padding: 13px;
+  text-align: center; padding: 14px;
   border-radius: 14px; font-weight: 600;
-  font-size: 14px; margin-top: auto;
+  font-size: 15px; margin-top: auto;
 }
 .hs-tab-bar {
   display: flex; justify-content: space-around;
-  padding: 10px 0 24px; font-size: 9px;
+  padding: 12px 0 26px; font-size: 9px;
   color: var(--text-muted);
 }
 .hs-tab {
@@ -374,41 +409,14 @@ nav.scrolled {
 .hs-tab.active { opacity: 1; color: var(--accent); }
 .hs-tab-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 
-/* Floating stats — glass morphism */
-.float-stat {
-  position: absolute;
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(210,210,215,0.6);
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  opacity: 0;
-  animation: float-appear 9s ease-in-out infinite;
-}
-.float-1 { top: 100px; left: calc(50% - 280px); animation-delay: 0.9s; }
-.float-2 { top: 260px; right: calc(50% - 280px); animation-delay: 2.8s; }
-.float-3 { bottom: 120px; left: calc(50% - 250px); animation-delay: 4.6s; }
-.float-stat-value {
-  font-size: 22px; font-weight: 700; color: var(--text);
-  letter-spacing: -0.5px; font-family: 'IBM Plex Mono', monospace;
-}
-.float-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-@media (max-width: 768px) {
-  .float-stat { display: none; }
-  .hero { padding: 120px 0 60px; }
-}
-
 /* ══════════════════ SOCIAL PROOF / MARQUEE ══════════════════ */
 .proof {
-  padding: 0 0 64px;
+  padding: 0 0 48px;
   overflow: hidden;
 }
 .proof-text {
-  font-size: 12px; text-transform: uppercase;
-  letter-spacing: 2px; color: var(--text-muted);
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 3px; color: var(--text-muted);
   font-weight: 600; text-align: center;
   margin-bottom: 18px;
 }
@@ -427,9 +435,9 @@ nav.scrolled {
   animation: marquee 22s linear infinite;
 }
 .proof-logo {
-  font-size: 13px; font-weight: 700;
+  font-size: 14px; font-weight: 700;
   letter-spacing: -0.2px; color: var(--text);
-  opacity: 0.32; white-space: nowrap;
+  opacity: 0.4; white-space: nowrap;
   flex-shrink: 0;
 }
 
@@ -444,39 +452,43 @@ nav.scrolled {
   gap: 80px; align-items: center;
 }
 .problem-left h2 {
-  font-size: clamp(28px, 4vw, 40px);
-  font-weight: 800; letter-spacing: -1px;
-  line-height: 1.1; margin-bottom: 20px;
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 800; letter-spacing: -1.5px;
+  line-height: 1.05; margin-bottom: 20px;
 }
 .problem-left p {
   font-size: 17px; color: var(--text-secondary);
-  line-height: 1.65; margin-bottom: 20px;
+  line-height: 1.5; margin-bottom: 0;
 }
 .problem-stats {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 16px; margin-top: 32px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px; margin-top: 36px;
 }
 .problem-stat {
   padding: 20px; background: var(--bg);
   border-radius: var(--radius-sm);
 }
 .problem-stat-val {
-  font-size: 28px; font-weight: 800;
-  color: var(--text); letter-spacing: -1px;
+  font-size: 40px; font-weight: 800;
+  color: var(--text); letter-spacing: -1.5px;
   font-family: 'IBM Plex Mono', monospace;
+  line-height: 1;
 }
 .problem-stat-label {
-  font-size: 12px; color: var(--text-muted);
-  margin-top: 4px; line-height: 1.4;
+  font-size: 11px; color: var(--text-muted);
+  margin-top: 6px; line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
-/* Right side — app cards stagger from right */
+/* Right side — goal cards */
 .problem-right {
   display: flex; flex-direction: column; gap: 12px;
 }
 .problem-app {
   display: flex; align-items: center; gap: 14px;
-  padding: 16px 20px;
+  padding: 18px 20px;
   border-radius: var(--radius-sm);
   background: var(--bg);
   position: relative;
@@ -493,32 +505,20 @@ nav.scrolled {
 .problem-app:nth-child(4) { transition-delay: 0.24s; }
 
 .problem-app-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px; background: var(--card-border);
+  width: 44px; height: 44px;
+  border-radius: 12px; background: var(--card-border);
   flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
 }
 .problem-app-info { flex: 1; }
 .problem-app-name {
-  font-size: 14px; font-weight: 600;
+  font-size: 15px; font-weight: 600;
   color: var(--text); position: relative;
   display: inline-block;
 }
-/* Strikethrough for deleted apps */
-.problem-app.deleted .problem-app-name::after {
-  content: '';
-  position: absolute;
-  left: 0; top: 50%;
-  width: 100%; height: 1.5px;
-  background: var(--error);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.5s ease 0.4s;
-}
-.problem-app.deleted.slide-in .problem-app-name::after {
-  transform: scaleX(1);
-}
-.problem-app-desc { font-size: 11px; color: var(--text-muted); }
-.problem-app-status { font-size: 11px; color: var(--error); font-weight: 600; }
+.problem-app-desc { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.problem-app-status { font-size: 11px; color: var(--text-muted); font-weight: 500; }
 
 .problem-app.twentify {
   background: var(--accent-light);
@@ -530,19 +530,22 @@ nav.scrolled {
 }
 .problem-app.twentify .problem-app-icon {
   background: linear-gradient(145deg, var(--accent), var(--accent-dark));
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 800; font-size: 14px;
+  color: #fff; font-weight: 800; font-size: 15px;
 }
-.problem-app.twentify .problem-app-status { color: var(--success); }
+.problem-app.twentify .problem-app-status { color: var(--success); font-weight: 600; }
 
 @media (max-width: 768px) {
   .problem-grid { grid-template-columns: 1fr; gap: 48px; }
+  .problem-stats { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .problem-stats { grid-template-columns: 1fr; }
 }
 
 /* ══════════════════ HOW IT WORKS ══════════════════ */
 .how-steps {
   display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 24px; margin-top: 60px;
+  gap: 24px; margin-top: 56px;
   position: relative;
 }
 .how-step {
@@ -552,19 +555,18 @@ nav.scrolled {
   padding: 36px 28px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, border-left-width 0.3s ease;
-  border-left: 1px solid var(--card-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 .how-step:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.07);
-  border-left: 3px solid var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+  border-color: rgba(0,113,227,0.2);
 }
-/* Dashed connector between steps (not on last) */
+/* Dashed connector */
 .how-step:not(:last-child)::after {
   content: '';
   position: absolute;
-  top: 42px; right: -13px;
+  top: 44px; right: -13px;
   width: 26px; height: 2px;
   border-top: 2px dashed rgba(0,113,227,0.25);
   z-index: 2;
@@ -572,44 +574,44 @@ nav.scrolled {
 /* Large decorative step number */
 .how-step-bg-num {
   position: absolute;
-  top: -12px; right: 12px;
+  top: -16px; right: 12px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 120px; font-weight: 700;
+  font-size: 160px; font-weight: 700;
   color: var(--text);
-  opacity: 0.028;
+  opacity: 0.04;
   line-height: 1;
   pointer-events: none;
   user-select: none;
 }
 .how-step-num {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px; font-weight: 600;
-  color: var(--accent); margin-bottom: 16px;
-  position: relative; z-index: 1;
-}
-.how-step-icon {
-  width: 48px; height: 48px; border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent-light) 0%, rgba(235,245,255,0.3) 100%);
-  box-shadow: 0 0 0 1px rgba(0,113,227,0.1);
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; margin-bottom: 20px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px; font-weight: 700;
+  margin-bottom: 20px;
   position: relative; z-index: 1;
+  box-shadow: 0 4px 16px rgba(0,113,227,0.2);
 }
 .how-step h3 {
-  font-size: 19px; font-weight: 700;
-  letter-spacing: -0.3px; margin-bottom: 10px;
+  font-size: 20px; font-weight: 700;
+  letter-spacing: -0.4px; margin-bottom: 10px;
   position: relative; z-index: 1;
 }
 .how-step p {
   font-size: 14px; color: var(--text-secondary);
-  line-height: 1.6; position: relative; z-index: 1;
+  line-height: 1.5; position: relative; z-index: 1;
 }
 .how-step-time {
   display: inline-flex; align-items: center; gap: 6px;
-  margin-top: 16px; padding: 4px 10px;
-  border-radius: 6px; background: var(--bg);
-  font-size: 11px; font-weight: 600;
-  color: var(--text-muted);
+  margin-top: 18px; padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--accent-light);
+  border: 1px solid rgba(0,113,227,0.1);
+  font-size: 13px; font-weight: 600;
+  color: var(--accent);
   font-family: 'IBM Plex Mono', monospace;
   position: relative; z-index: 1;
 }
@@ -624,7 +626,6 @@ nav.scrolled {
   color: #fff;
   position: relative;
 }
-/* Top gradient fade from bg into dark */
 .science::before {
   content: '';
   position: absolute;
@@ -633,35 +634,50 @@ nav.scrolled {
   background: linear-gradient(to bottom, var(--bg) 0%, var(--text) 100%);
   pointer-events: none;
 }
-.science .section-tag { color: rgba(255,255,255,0.35); }
+.science .section-tag { color: rgba(255,255,255,0.3); }
 .science h2 { color: #fff; }
-.science .section-sub { color: rgba(255,255,255,0.5) !important; }
+.science .section-sub { color: rgba(255,255,255,0.45) !important; }
 
 .science-grid {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 20px; margin-top: 60px;
+  gap: 20px; margin-top: 56px;
 }
 .science-card {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-top: 2px solid rgba(0,113,227,0.4);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: var(--radius);
   padding: 32px;
-  transition: background 0.3s, border-color 0.3s;
+  transition: background 0.3s, border-color 0.3s, transform 0.3s;
+  position: relative;
+  overflow: hidden;
 }
 .science-card:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.07);
   border-color: rgba(255,255,255,0.1);
-  border-top-color: rgba(0,113,227,0.65);
+  transform: translateY(-4px);
 }
-.science-card-icon { font-size: 28px; margin-bottom: 16px; }
-.science-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #fff; }
-.science-card p { font-size: 14px; color: rgba(255,255,255,0.52); line-height: 1.6; }
+.science-card-stat {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 36px; font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+.science-card h3 {
+  font-size: 21px; font-weight: 700;
+  margin-bottom: 8px; color: #fff;
+  letter-spacing: -0.3px;
+}
+.science-card p {
+  font-size: 14px; color: rgba(255,255,255,0.45);
+  line-height: 1.5;
+}
 .science-card .source {
-  display: inline-block; margin-top: 14px;
-  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
-  color: rgba(255,255,255,0.7);
-  padding: 4px 10px;
+  display: inline-block; margin-top: 16px;
+  font-size: 12px; font-family: 'IBM Plex Mono', monospace;
+  color: rgba(255,255,255,0.65);
+  padding: 5px 12px;
   background: rgba(0,113,227,0.15);
   border-radius: 6px;
   border: 1px solid rgba(0,113,227,0.2);
@@ -669,62 +685,53 @@ nav.scrolled {
 @media (max-width: 768px) { .science-grid { grid-template-columns: 1fr; } }
 
 /* ══════════════════ FEATURES ══════════════════ */
-/* Alternating masonry: 3-col grid
-   Row 1: [wide span 2] [narrow span 1]
-   Row 2: [narrow span 1] [wide span 2]
-   Row 3: [wide span 2] [narrow span 1]
-*/
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 60px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 56px;
 }
-.features-grid .feature:nth-child(1) { grid-column: span 2; }
-.features-grid .feature:nth-child(2) { grid-column: span 1; }
-.features-grid .feature:nth-child(3) { grid-column: span 1; }
-.features-grid .feature:nth-child(4) { grid-column: span 2; }
-.features-grid .feature:nth-child(5) { grid-column: span 2; }
-.features-grid .feature:nth-child(6) { grid-column: span 1; }
-
 .feature {
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  padding: 28px 24px;
-  clip-path: inset(0 0 100% 0);
+  padding: 32px 28px;
   opacity: 0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.3s ease;
 }
-.feature.clip-visible {
-  animation: clip-reveal 0.65s ease forwards;
+.feature.visible {
+  opacity: 1; transform: translateY(0);
 }
+.feature:nth-child(1).visible { transition-delay: 0s; }
+.feature:nth-child(2).visible { transition-delay: 0.08s; }
+.feature:nth-child(3).visible { transition-delay: 0.16s; }
+.feature:nth-child(4).visible { transition-delay: 0.24s; }
 .feature:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 36px rgba(0,0,0,0.05);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.06);
 }
 .feature-icon-wrap {
-  width: 48px; height: 48px; border-radius: 12px;
+  width: 56px; height: 56px; border-radius: 14px;
   background: linear-gradient(135deg, var(--accent-light) 0%, rgba(255,255,255,0.6) 100%);
   box-shadow: 0 0 0 1px rgba(0,113,227,0.12), 0 2px 8px rgba(0,113,227,0.06);
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; margin-bottom: 14px;
+  font-size: 24px; margin-bottom: 16px;
 }
 .feature h3 {
-  font-size: 15px; font-weight: 700;
-  margin-bottom: 6px; letter-spacing: -0.2px;
+  font-size: 17px; font-weight: 700;
+  margin-bottom: 6px; letter-spacing: -0.3px;
 }
-.feature p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+.feature p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
 
 @media (max-width: 768px) {
   .features-grid { grid-template-columns: 1fr; }
-  .features-grid .feature:nth-child(n) { grid-column: span 1; }
 }
 
 /* ══════════════════ TESTIMONIALS ══════════════════ */
 .testimonials-grid {
   display: grid; grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px; margin-top: 60px;
+  gap: 20px; margin-top: 56px;
 }
 .testimonial {
   background: var(--card);
@@ -734,9 +741,8 @@ nav.scrolled {
   position: relative;
   overflow: hidden;
 }
-/* Decorative large quote mark */
 .testimonial::before {
-  content: '"';
+  content: '\201C';
   position: absolute;
   top: -8px; left: 16px;
   font-size: 96px; line-height: 1;
@@ -747,8 +753,6 @@ nav.scrolled {
   pointer-events: none;
   user-select: none;
 }
-
-/* Stars with stagger animation */
 .testimonial-stars { margin-bottom: 14px; display: flex; gap: 3px; }
 .star {
   color: var(--warning); font-size: 14px;
@@ -762,11 +766,10 @@ nav.scrolled {
 
 .testimonial-text {
   font-size: 15px; color: var(--text);
-  line-height: 1.6; margin-bottom: 18px;
+  line-height: 1.55; margin-bottom: 18px;
   font-weight: 400; position: relative; z-index: 1;
 }
 .testimonial-author { display: flex; align-items: center; gap: 10px; }
-/* Avatar gradient border */
 .avatar-ring {
   width: 40px; height: 40px; border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
@@ -788,7 +791,6 @@ nav.scrolled {
 }
 
 /* ══════════════════ PRICING ══════════════════ */
-/* Toggle with sliding indicator */
 .pricing-toggle {
   display: flex; justify-content: center;
   margin: 40px auto 48px;
@@ -834,8 +836,6 @@ nav.scrolled {
   padding: 36px 32px;
   position: relative;
 }
-
-/* Pro card gradient border wrapper */
 .pricing-card-wrap {
   border-radius: calc(var(--radius) + 2px);
   padding: 2px;
@@ -846,12 +846,11 @@ nav.scrolled {
   border: none;
   border-radius: var(--radius);
 }
-
 .pricing-popular {
   position: absolute;
   top: -14px; left: 50%;
   transform: translateX(-50%);
-  background: var(--accent);
+  background: var(--success);
   color: #fff;
   font-size: 11px; font-weight: 600;
   padding: 4px 14px;
@@ -905,8 +904,6 @@ nav.scrolled {
   border: 1.5px solid var(--card-border);
 }
 .pricing-btn-outline:hover { border-color: var(--text); }
-
-/* Pro CTA with shimmer */
 .pricing-btn-filled {
   background: linear-gradient(
     90deg,
@@ -930,47 +927,48 @@ nav.scrolled {
 /* ══════════════════ FINAL CTA ══════════════════ */
 .final-cta {
   text-align: center;
-  padding: 120px 0 140px;
+  padding: 140px 0 160px;
   position: relative;
   overflow: hidden;
 }
-/* Dot texture */
 .final-cta::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;
 }
-/* Large decorative "20%" */
 .final-cta-deco {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(120px, 20vw, 220px);
+  font-size: clamp(140px, 22vw, 260px);
   font-weight: 800;
   font-family: 'IBM Plex Mono', monospace;
   color: var(--text);
-  opacity: 0.04;
+  opacity: 0.05;
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
-  letter-spacing: -4px;
+  letter-spacing: -6px;
 }
 .final-cta .container {
   position: relative; z-index: 1;
 }
 .final-cta h2 {
-  font-size: clamp(32px, 5vw, 52px);
-  font-weight: 800; letter-spacing: -1.5px;
-  line-height: 1.1; margin-bottom: 16px;
+  font-size: clamp(36px, 6vw, 60px);
+  font-weight: 800; letter-spacing: -2px;
+  line-height: 1.05; margin-bottom: 16px;
 }
 .final-cta p {
   font-size: 18px; color: var(--text-secondary);
   margin-bottom: 36px; max-width: 480px;
   margin-left: auto; margin-right: auto;
   line-height: 1.5;
+}
+.final-cta .btn-primary {
+  animation: cta-glow 2.5s ease-in-out infinite;
 }
 
 /* ══════════════════ FOOTER ══════════════════ */
@@ -980,7 +978,6 @@ footer {
   padding: 48px 0;
   position: relative;
 }
-/* Subtle top gradient fade */
 footer::before {
   content: '';
   position: absolute;
@@ -1004,18 +1001,18 @@ footer::before {
 
 /* ══════════════════ SHARED ══════════════════ */
 .section-tag {
-  font-size: 12px; text-transform: uppercase;
-  letter-spacing: 2.5px; color: var(--text-muted);
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 3px; color: var(--text-muted);
   font-weight: 600; margin-bottom: 14px;
 }
 .section-heading {
-  font-size: clamp(28px, 4vw, 42px);
-  font-weight: 800; letter-spacing: -1px;
-  line-height: 1.1; margin-bottom: 16px;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 800; letter-spacing: -1.5px;
+  line-height: 1.05; margin-bottom: 16px;
 }
 .section-sub {
   font-size: 17px; color: var(--text-secondary);
-  max-width: 520px; line-height: 1.55;
+  max-width: 520px; line-height: 1.5;
 }
 
 /* ══════════════════ SCROLL ANIMATIONS ══════════════════ */
@@ -1028,15 +1025,6 @@ footer::before {
   opacity: 1;
   transform: translateY(0);
 }
-/* Clip-path reveal for feature cards */
-.feature { clip-path: inset(0 0 100% 0); opacity: 0; }
-.feature.clip-visible { animation: clip-reveal 0.6s ease forwards; }
-.feature:nth-child(1).clip-visible { animation-delay: 0s; }
-.feature:nth-child(2).clip-visible { animation-delay: 0.07s; }
-.feature:nth-child(3).clip-visible { animation-delay: 0.14s; }
-.feature:nth-child(4).clip-visible { animation-delay: 0.21s; }
-.feature:nth-child(5).clip-visible { animation-delay: 0.28s; }
-.feature:nth-child(6).clip-visible { animation-delay: 0.35s; }
 </style>
 </head>
 <body>
@@ -1052,7 +1040,7 @@ footer::before {
       <li><a href="#how" class="hide-mobile">How It Works</a></li>
       <li><a href="#science" class="hide-mobile">Science</a></li>
       <li><a href="#pricing">Pricing</a></li>
-      <li><a href="#download" class="nav-cta">Get the App</a></li>
+      <li><a href="#download" class="nav-cta">Start Free</a></li>
     </ul>
   </div>
 </nav>
@@ -1064,36 +1052,36 @@ footer::before {
       <div class="hero-badge-dot-wrap">
         <div class="hero-badge-dot"></div>
       </div>
-      Based on peer-reviewed research. Not opinions. Not trends.
+      Backed by 200+ studies
     </div>
     <h1>
       <span class="word" style="animation-delay:0.1s">The&nbsp;</span><span class="word accent-word" style="animation-delay:0.2s">20%</span><span class="word" style="animation-delay:0.3s">&nbsp;of&nbsp;fitness&nbsp;that</span><br>
       <span class="word" style="animation-delay:0.4s">generates&nbsp;</span><span class="word" style="animation-delay:0.5s">80%&nbsp;of&nbsp;the&nbsp;results.</span>
     </h1>
-    <p class="hero-sub">Gym. Running. Nutrition. Recovery. We read the research so you don't have to. What's left is what actually works. Your program, your macros, your plan — done.</p>
+    <p class="hero-sub">Gym. Running. Nutrition. Recovery. Only what the science says works.</p>
     <div class="hero-actions">
       <a href="#download" class="btn-primary">
-        Download Free
-        <span class="btn-arrow">&rarr;</span>
-      </a>
-      <a href="#how" class="btn-secondary">
-        See how it works
+        Get Started Free
         <span class="btn-arrow">&rarr;</span>
       </a>
     </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-val">200+</div>
+        <div class="hero-stat-label">Studies</div>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-val">34 min</div>
+        <div class="hero-stat-label">Avg. session</div>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-val">5</div>
+        <div class="hero-stat-label">Domains</div>
+      </div>
+    </div>
     <div class="hero-phone-wrap">
-      <div class="float-stat float-1">
-        <div class="float-stat-value">80<span style="font-size:13px;color:var(--text-muted);font-family:'DM Sans',sans-serif">%</span></div>
-        <div class="float-stat-label">of results from 20% effort</div>
-      </div>
-      <div class="float-stat float-2">
-        <div class="float-stat-value" style="color:var(--accent)">34<span style="font-size:13px;color:var(--text-muted);font-family:'DM Sans',sans-serif"> min</span></div>
-        <div class="float-stat-label">Average session</div>
-      </div>
-      <div class="float-stat float-3">
-        <div class="float-stat-value">5</div>
-        <div class="float-stat-label">Domains: gym, run, bike, eat, recover</div>
-      </div>
       <div class="hero-phone">
         <div class="hero-notch"><div class="hero-notch-pill"></div></div>
         <div class="hero-screen">
@@ -1124,7 +1112,7 @@ footer::before {
 
 <!-- ══════════════════ SOCIAL PROOF ══════════════════ -->
 <section class="proof">
-  <div class="proof-text">Built on research from</div>
+  <div class="proof-text">Built on peer-reviewed research</div>
   <div class="proof-track-wrap">
     <div class="proof-track" id="proofTrack">
       <span class="proof-logo">Harvard Menu Labeling Research</span>
@@ -1158,52 +1146,55 @@ footer::before {
     <div class="problem-grid">
       <div class="problem-left reveal">
         <div class="section-tag">The Problem</div>
-        <h2>You're busy. You don't need to read the research. We already did.</h2>
-        <p>The science on what actually moves the needle — the right lifts, the right running structure, the right nutrition habits — already exists. It's in peer-reviewed journals. We've read it, synthesized it, and built it into your plan.</p>
-        <p>Then we match it to your goal. A race. General health. Longevity. Your best body. You tell us what you're after. We handle the inputs — what program, what macros, what to track. You do the work.</p>
+        <h2>Too much noise.<br>Not enough signal.</h2>
+        <p>200+ peer-reviewed studies. Synthesized into one plan. Matched to your goal.</p>
         <div class="problem-stats">
           <div class="problem-stat">
             <div class="problem-stat-val" data-target="200" data-suffix="+">0+</div>
-            <div class="problem-stat-label">peer-reviewed studies synthesized into your plan</div>
+            <div class="problem-stat-label">Studies synthesized</div>
           </div>
           <div class="problem-stat">
             <div class="problem-stat-val" data-target="34" data-suffix=" min">0 min</div>
-            <div class="problem-stat-label">average daily session. That's it.</div>
+            <div class="problem-stat-label">Avg. session</div>
+          </div>
+          <div class="problem-stat">
+            <div class="problem-stat-val" data-target="5" data-suffix="">0</div>
+            <div class="problem-stat-label">Domains</div>
           </div>
         </div>
       </div>
       <div class="problem-right" id="appList">
         <div class="problem-app">
-          <div class="problem-app-icon" style="background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:20px;">🏃</div>
+          <div class="problem-app-icon" style="background:var(--accent-light);">&#127939;</div>
           <div class="problem-app-info">
-            <div class="problem-app-name">Racing & Performance</div>
-            <div class="problem-app-desc">Program · weekly structure · intensity zones · taper</div>
+            <div class="problem-app-name">Racing &amp; Performance</div>
+            <div class="problem-app-desc">Program, zones, taper</div>
           </div>
-          <div class="problem-app-status" style="color:var(--text-muted);font-weight:500;">→</div>
+          <div class="problem-app-status">&#8594;</div>
         </div>
         <div class="problem-app">
-          <div class="problem-app-icon" style="background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:20px;">❤️</div>
+          <div class="problem-app-icon" style="background:var(--accent-light);">&#10084;&#65039;</div>
           <div class="problem-app-info">
             <div class="problem-app-name">General Health</div>
-            <div class="problem-app-desc">Movement · nutrition habits · recovery · consistency</div>
+            <div class="problem-app-desc">Movement, nutrition, recovery</div>
           </div>
-          <div class="problem-app-status" style="color:var(--text-muted);font-weight:500;">→</div>
+          <div class="problem-app-status">&#8594;</div>
         </div>
         <div class="problem-app">
-          <div class="problem-app-icon" style="background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:20px;">🧬</div>
+          <div class="problem-app-icon" style="background:var(--accent-light);">&#129516;</div>
           <div class="problem-app-info">
             <div class="problem-app-name">Longevity</div>
-            <div class="problem-app-desc">Zone 2 · strength minimums · VO₂max · sleep protocols</div>
+            <div class="problem-app-desc">Zone 2, VO&#8322;max, sleep</div>
           </div>
-          <div class="problem-app-status" style="color:var(--text-muted);font-weight:500;">→</div>
+          <div class="problem-app-status">&#8594;</div>
         </div>
         <div class="problem-app twentify">
           <div class="problem-app-icon">20</div>
           <div class="problem-app-info">
             <div class="problem-app-name">Your Dream Body</div>
-            <div class="problem-app-desc">Hypertrophy · macros · progressive overload · body recomp</div>
+            <div class="problem-app-desc">Hypertrophy, macros, recomp</div>
           </div>
-          <div class="problem-app-status">We've got it ✓</div>
+          <div class="problem-app-status">We've got it &#10003;</div>
         </div>
       </div>
     </div>
@@ -1216,32 +1207,28 @@ footer::before {
     <div class="text-center reveal">
       <div class="section-tag">How It Works</div>
       <h2 class="section-heading">Pick your domains.<br>We handle the science.</h2>
-      <p class="section-sub mx-auto">Gym, running, cycling, nutrition, recovery — you choose what matters to you. We strip it down to what the science says actually moves the needle. Then you go live your life.</p>
     </div>
     <div class="how-steps">
       <div class="how-step reveal">
         <div class="how-step-bg-num">01</div>
         <div class="how-step-num">01</div>
-        <div class="how-step-icon">&#127919;</div>
-        <h3>Tell us what you care about</h3>
-        <p>Racing a marathon? Building strength? Living longer? Pick your goal and your domains. Five questions. We take it from there.</p>
-        <div class="how-step-time">&#9201; 45 seconds</div>
+        <h3>Pick your goal</h3>
+        <p>5 questions. Your domains. Done.</p>
+        <div class="how-step-time">45 sec</div>
       </div>
       <div class="how-step reveal" style="transition-delay: 0.1s">
         <div class="how-step-bg-num">02</div>
         <div class="how-step-num">02</div>
-        <div class="how-step-icon">&#128300;</div>
-        <h3>We handle the inputs.</h3>
-        <p>We've synthesized 200+ peer-reviewed studies so you don't have to. Your program, your macros, your tracking targets — all calculated. Every recommendation is cited. No opinions. No guesswork.</p>
-        <div class="how-step-time">&#9201; 3 seconds</div>
+        <h3>We build the plan</h3>
+        <p>200+ studies distilled. Program, macros, tracking &mdash; all cited.</p>
+        <div class="how-step-time">3 sec</div>
       </div>
       <div class="how-step reveal" style="transition-delay: 0.2s">
         <div class="how-step-bg-num">03</div>
         <div class="how-step-num">03</div>
-        <div class="how-step-icon">&#128640;</div>
-        <h3>Do less. Get more. Go live.</h3>
-        <p>Follow your daily 20%. Gym sessions, run plans, simple food rules, recovery protocols — then close the app and get back to your actual life.</p>
-        <div class="how-step-time">&#9201; 20–40 min/day</div>
+        <h3>Do 20%. Get 80%.</h3>
+        <p>Follow today's plan. Close the app. Live your life.</p>
+        <div class="how-step-time">20&ndash;40 min/day</div>
       </div>
     </div>
   </div>
@@ -1253,31 +1240,31 @@ footer::before {
     <div class="text-center reveal">
       <div class="section-tag">The Science</div>
       <h2 class="section-heading">If we can't cite it,<br>it's not in your plan.</h2>
-      <p class="section-sub mx-auto" style="color:rgba(255,255,255,0.5)">No bro-science. No influencer opinions. No trends. Peer-reviewed research or it doesn't make the cut.</p>
+      <p class="section-sub mx-auto" style="color:rgba(255,255,255,0.45)">Peer-reviewed or it doesn't make the cut.</p>
     </div>
     <div class="science-grid">
       <div class="science-card reveal">
-        <div class="science-card-icon">&#127947;&#65039;</div>
-        <h3>Compound > Isolation</h3>
-        <p>Multi-joint movements activate 85% more total muscle fiber than isolation exercises. Fewer exercises, more results per minute.</p>
+        <div class="science-card-stat">85%</div>
+        <h3>Compound &gt; Isolation</h3>
+        <p>More muscle activation. Fewer exercises.</p>
         <span class="source">Schoenfeld et al., 2017</span>
       </div>
       <div class="science-card reveal" style="transition-delay: 0.1s">
-        <div class="science-card-icon">&#128202;</div>
+        <div class="science-card-stat">#1</div>
         <h3>Progressive Overload</h3>
-        <p>Gradually increasing load over time beats changing exercises constantly. The single most evidence-backed driver of strength gains.</p>
+        <p>The most evidence-backed driver of strength.</p>
         <span class="source">Kraemer &amp; Ratamess, 2004</span>
       </div>
       <div class="science-card reveal" style="transition-delay: 0.15s">
-        <div class="science-card-icon">&#127939;</div>
+        <div class="science-card-stat">80%</div>
         <h3>Zone 2 Is the 20% of Cardio</h3>
-        <p>80% of elite endurance training happens at low intensity. Zone 2 running builds mitochondrial density more effectively than HIIT for most people.</p>
+        <p>Of elite training is low intensity.</p>
         <span class="source">Seiler, 2010</span>
       </div>
       <div class="science-card reveal" style="transition-delay: 0.2s">
-        <div class="science-card-icon">&#127869;</div>
+        <div class="science-card-stat">&gt;</div>
         <h3>Protein Timing Is Overrated</h3>
-        <p>Total daily protein intake matters far more than meal timing or supplement windows. Hit the number, hit it consistently. The rest is noise.</p>
+        <p>Total daily intake &gt; timing. Hit the number.</p>
         <span class="source">Schoenfeld &amp; Aragon, 2018</span>
       </div>
     </div>
@@ -1295,32 +1282,22 @@ footer::before {
       <div class="feature">
         <div class="feature-icon-wrap">&#9889;</div>
         <h3>2-Tap Start</h3>
-        <p>Open app. Tap start. Today's plan loads instantly — gym, run, or recovery. Zero decisions required.</p>
+        <p>Open. Tap. Go. Zero decisions.</p>
       </div>
       <div class="feature">
         <div class="feature-icon-wrap">&#127947;&#65039;</div>
         <h3>Multi-Domain</h3>
-        <p>Strength, running, cycling, nutrition, recovery. Pick one or all five. We 80/20 each one separately.</p>
+        <p>Gym, run, bike, eat, recover. We 80/20 each.</p>
       </div>
       <div class="feature">
         <div class="feature-icon-wrap">&#129504;</div>
         <h3>AI That Adapts</h3>
-        <p>Your plan evolves as you progress. Load increases, run distances shift, food habits adjust. All automatic, all cited.</p>
+        <p>Your plan evolves. All automatic. All cited.</p>
       </div>
       <div class="feature">
         <div class="feature-icon-wrap">&#128214;</div>
-        <h3>Every "Why" Answered</h3>
-        <p>Tap any recommendation to see the research behind it. If we can't cite it, it's not in your plan. Period.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon-wrap">&#128200;</div>
-        <h3>Progress Without Dashboards</h3>
-        <p>Simple consistency grid. Trend lines that go up. You see it's working without a PhD in data analysis.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon-wrap">&#127769;</div>
-        <h3>Recovery Is Part of the Plan</h3>
-        <p>Rest days aren't empty days. The app tells you what's happening in your body and why today matters just as much.</p>
+        <h3>Every &ldquo;Why&rdquo; Answered</h3>
+        <p>Tap any recommendation. See the research.</p>
       </div>
     </div>
   </div>
@@ -1331,7 +1308,7 @@ footer::before {
   <div class="container">
     <div class="text-center reveal">
       <div class="section-tag">Early Access</div>
-      <h2 class="section-heading">Don't take our word for it.</h2>
+      <h2 class="section-heading">Real people. Real results.</h2>
     </div>
     <div class="testimonials-grid">
       <div class="testimonial reveal">
@@ -1342,7 +1319,7 @@ footer::before {
           <span class="star">&#9733;</span>
           <span class="star">&#9733;</span>
         </div>
-        <div class="testimonial-text">"I deleted 4 fitness apps before this. Twentify just tells me what to do — gym days, run days, what to eat. I do it and move on with my life."</div>
+        <div class="testimonial-text">"Deleted 4 fitness apps. Twentify tells me what to do &mdash; gym, run, eat. I do it and move on."</div>
         <div class="testimonial-author">
           <div class="avatar-ring">
             <div class="testimonial-avatar">E</div>
@@ -1361,7 +1338,7 @@ footer::before {
           <span class="star">&#9733;</span>
           <span class="star">&#9733;</span>
         </div>
-        <div class="testimonial-text">"Every recommendation has a citation. Every single one. I stopped second-guessing my gym plan and my running routine in the same week."</div>
+        <div class="testimonial-text">"Every recommendation has a citation. I stopped second-guessing my plan in the first week."</div>
         <div class="testimonial-author">
           <div class="avatar-ring">
             <div class="testimonial-avatar">D</div>
@@ -1380,7 +1357,7 @@ footer::before {
           <span class="star">&#9733;</span>
           <span class="star">&#9733;</span>
         </div>
-        <div class="testimonial-text">"3 workouts, 2 runs, basic nutrition rules. 25–30 min a day. I'm in better shape at 41 than I was at 30. Less really is more."</div>
+        <div class="testimonial-text">"3 workouts, 2 runs, basic food rules. 30 min/day. Better shape at 41 than at 30."</div>
         <div class="testimonial-author">
           <div class="avatar-ring">
             <div class="testimonial-avatar">B</div>
@@ -1405,7 +1382,7 @@ footer::before {
     <div class="pricing-toggle reveal" id="pricingToggle">
       <div class="pricing-toggle-slider" id="toggleSlider"></div>
       <button class="active" id="btnMonthly" onclick="setPricing('monthly', this)">Monthly</button>
-      <button id="btnAnnual" onclick="setPricing('annual', this)">Annual <span style="color:var(--accent);font-size:12px">–33%</span></button>
+      <button id="btnAnnual" onclick="setPricing('annual', this)">Annual <span style="color:var(--accent);font-size:12px">&ndash;33%</span></button>
     </div>
     <div class="pricing-cards">
       <div class="pricing-card reveal">
@@ -1449,16 +1426,16 @@ footer::before {
 <section class="final-cta" id="download">
   <div class="final-cta-deco">20%</div>
   <div class="container reveal">
-    <div class="section-tag">That's it.</div>
-    <h2>Your 20% is waiting.</h2>
-    <p>Tell us your goal. Pick your domains. Your plan is ready in under 2 minutes. No guesswork. No credit card. No account required.</p>
-    <div class="hero-actions">
+    <div class="section-tag">That's your 20%.</div>
+    <h2>Your 20% starts now.</h2>
+    <p>Free. No account. Under 2 minutes.</p>
+    <div class="hero-actions" style="margin-bottom: 16px">
       <a href="#" class="btn-primary" style="padding: 18px 40px; font-size: 18px;">
-        Download for iOS
+        Download Free
         <span class="btn-arrow">&rarr;</span>
       </a>
     </div>
-    <p style="font-size: 13px; color: var(--text-muted); margin-top: 0;">Android coming soon &middot; No account required to start</p>
+    <p style="font-size: 13px; color: var(--text-muted); margin-top: 0; margin-bottom: 0;">iOS now. Android soon.</p>
   </div>
 </section>
 
@@ -1481,7 +1458,7 @@ footer::before {
 </footer>
 
 <script>
-// ── Nav scroll ──
+// ── Nav scroll — transparent over dark hero, dark glass on scroll ──
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', window.scrollY > 20);
@@ -1497,11 +1474,11 @@ const revealObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-// ── Feature clip-path reveal ──
+// ── Feature fade-up reveal ──
 const featureObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
-      entry.target.classList.add('clip-visible');
+      entry.target.classList.add('visible');
       featureObserver.unobserve(entry.target);
     }
   });
@@ -1533,7 +1510,6 @@ function animateCountUp(el) {
   function tick(now) {
     const elapsed = Math.min(now - start, duration);
     const progress = elapsed / duration;
-    // Ease out cubic
     const eased = 1 - Math.pow(1 - progress, 3);
     const current = target * eased;
     el.textContent = decimals > 0
@@ -1579,7 +1555,6 @@ function initToggle() {
     slider.style.left = activeBtn.offsetLeft + 'px';
   }
 
-  // Init slider position
   updateSlider(btnMonthly);
   window.__updatePricingSlider = updateSlider;
 }
@@ -1595,7 +1570,7 @@ function setPricing(period, btn) {
 
   if (period === 'annual') {
     price.innerHTML = '<span class="price-num">$6.66</span><span>/mo</span>';
-    periodEl.textContent = '$79.99 billed annually · 7-day free trial';
+    periodEl.textContent = '$79.99 billed annually \u00B7 7-day free trial';
   } else {
     price.innerHTML = '<span class="price-num">$9.99</span><span>/mo</span>';
     periodEl.textContent = '7-day free trial';

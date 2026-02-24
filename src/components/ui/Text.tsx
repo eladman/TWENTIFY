@@ -8,33 +8,12 @@ type DataVariant = 'data.xl' | 'data.lg' | 'data.md' | 'data.sm';
 type OtherVariant = 'caption' | 'overline';
 export type TextVariant = HeadingVariant | BodyVariant | DataVariant | OtherVariant;
 
-export type TextColor =
-  | 'primary'
-  | 'secondary'
-  | 'muted'
-  | 'accent'
-  | 'success'
-  | 'error'
-  | 'warning'
-  | 'white';
-
 interface TextProps extends RNTextProps {
   variant?: TextVariant;
-  color?: TextColor;
+  color?: string;
   align?: TextStyle['textAlign'];
   children: React.ReactNode;
 }
-
-const colorMap: Record<TextColor, string> = {
-  primary: colors.textPrimary,
-  secondary: colors.textSecondary,
-  muted: colors.textMuted,
-  accent: colors.accent,
-  success: colors.success,
-  error: colors.error,
-  warning: colors.warning,
-  white: '#FFFFFF',
-};
 
 function getVariantStyle(variant: TextVariant): TextStyle {
   if (variant === 'caption') return typeScale.caption as TextStyle;
@@ -51,7 +30,7 @@ function getVariantStyle(variant: TextVariant): TextStyle {
 
 export function Text({
   variant = 'body.md',
-  color = 'primary',
+  color = colors.textPrimary,
   align,
   style,
   children,
@@ -63,7 +42,7 @@ export function Text({
     <RNText
       style={[
         variantStyle,
-        { color: colorMap[color] },
+        { color },
         align ? { textAlign: align } : undefined,
         style,
       ]}
@@ -73,3 +52,5 @@ export function Text({
     </RNText>
   );
 }
+
+export default Text;

@@ -1,98 +1,149 @@
+import React, { ReactNode } from 'react';
 import {
   Pressable,
-  PressableProps,
-  ViewStyle,
-  TextStyle,
   ActivityIndicator,
+  View,
+  ViewStyle,
+  StyleProp,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { Text } from './Text';
 import { colors } from '@/theme/colors';
-import * as Haptics from 'expo-haptics';
+import { spacing } from '@/theme/spacing';
 
 type ButtonVariant = 'primary' | 'secondary' | 'text';
-type ButtonSize = 'standard' | 'compact';
 
-interface ButtonProps extends Omit<PressableProps, 'children'> {
-  title: string;
+interface ButtonProps {
   variant?: ButtonVariant;
-  size?: ButtonSize;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
   loading?: boolean;
-  haptic?: boolean;
+  icon?: ReactNode;
+  fullWidth?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
+const BUTTON_RADIUS = 14;
+
 export function Button({
-  title,
   variant = 'primary',
-  size = 'standard',
-  loading = false,
-  haptic = true,
+  label,
   onPress,
-  disabled,
+  disabled = false,
+  loading = false,
+  icon,
+  fullWidth = false,
   style,
-  ...props
 }: ButtonProps) {
-  const handlePress = (e: Parameters<NonNullable<PressableProps['onPress']>>[0]) => {
-    if (haptic) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    onPress?.(e);
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const isDisabled = disabled || loading;
+
+  const handlePressIn = () => {
+    if (isDisabled) return;
+    scale.value = withTiming(0.97, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    });
   };
 
-  const textColor = variant === 'primary' ? 'white' : variant === 'text' ? 'accent' : 'primary';
+  const handlePressOut = () => {
+    if (isDisabled) return;
+    scale.value = withTiming(1, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    });
+  };
+
+  const handlePress = () => {
+    if (isDisabled) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  };
+
+  const textColor =
+    variant === 'primary'
+      ? '#FFFFFF'
+      : variant === 'text'
+        ? colors.accent
+        : colors.textPrimary;
+
+  const indicatorColor =
+    variant === 'primary' ? '#FFFFFF' : colors.accent;
 
   return (
-    <Pressable
-      onPress={handlePress}
-      disabled={disabled || loading}
-      style={({ pressed }) => [
-        getContainerStyle(variant, size, pressed, !!disabled),
-        style as ViewStyle,
-      ]}
-      {...props}
-    >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? '#FFFFFF' : colors.accent}
-          size="small"
-        />
-      ) : (
-        <Text
-          variant={variant === 'text' ? 'body.md' : 'body.lg'}
-          color={textColor}
-          style={getTextStyle(variant)}
-        >
-          {title}
-        </Text>
-      )}
-    </Pressable>
+    <Animated.View style={[animatedStyle, fullWidth && { width: '100%' }]}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          getContainerStyle(variant, pressed, disabled),
+          fullWidth && { width: '100%' },
+          style,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={indicatorColor} size="small" />
+        ) : (
+          <View style={styles.content}>
+            {icon && <View style={styles.icon}>{icon}</View>}
+            <Text
+              variant={variant === 'text' ? 'body.md' : 'body.lg'}
+              color={textColor}
+              style={{
+                fontFamily: 'DMSans_600SemiBold',
+                fontSize: variant === 'text' ? 14 : 16,
+              }}
+            >
+              {label}
+            </Text>
+          </View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
 function getContainerStyle(
   variant: ButtonVariant,
-  size: ButtonSize,
   pressed: boolean,
-  disabled: boolean
+  disabled: boolean,
 ): ViewStyle {
   const base: ViewStyle = {
-    borderRadius: 14,
+    borderRadius: BUTTON_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    opacity: disabled ? 0.5 : 1,
+    opacity: disabled ? 0.4 : 1,
   };
 
   switch (variant) {
     case 'primary':
       return {
         ...base,
-        height: size === 'standard' ? 52 : 48,
+        height: 52,
+        paddingVertical: spacing.lg,
+        paddingHorizontal: spacing['3xl'],
         backgroundColor: pressed ? colors.accentDark : colors.accent,
       };
     case 'secondary':
       return {
         ...base,
-        height: size === 'standard' ? 52 : 48,
+        height: 52,
+        paddingVertical: spacing.lg,
+        paddingHorizontal: spacing['3xl'],
         backgroundColor: pressed ? colors.background : 'transparent',
         borderWidth: 1.5,
         borderColor: colors.cardBorder,
@@ -105,9 +156,12 @@ function getContainerStyle(
   }
 }
 
-function getTextStyle(variant: ButtonVariant): TextStyle {
-  return {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: variant === 'text' ? 14 : 16,
-  };
-}
+const styles = {
+  content: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+  },
+  icon: {
+    marginRight: spacing.sm,
+  },
+};
