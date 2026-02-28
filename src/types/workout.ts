@@ -1,15 +1,34 @@
+export type MovementPattern =
+  | 'squat'
+  | 'hinge'
+  | 'push_horizontal'
+  | 'push_vertical'
+  | 'pull_horizontal'
+  | 'pull_vertical'
+  | 'accessory';
+
+export type ExerciseEquipment =
+  | 'barbell'
+  | 'dumbbell'
+  | 'bodyweight'
+  | 'cable'
+  | 'machine';
+
 export interface Exercise {
   id: string;
   name: string;
   category: 'compound' | 'isolation' | 'bodyweight';
-  movementPattern: string;
+  movementPattern: MovementPattern;
   primaryMuscles: string[];
-  secondaryMuscles?: string[];
-  equipment: string;
+  secondaryMuscles: string[];
+  equipment: ExerciseEquipment;
   alternatives: string[];
   citationIds: string[];
   instructions: string;
   cues: string[];
+  defaultReps: { min: number; max: number };
+  defaultSets: number;
+  restSeconds: number;
 }
 
 export interface SetData {

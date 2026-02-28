@@ -69,7 +69,6 @@ export default function RootLayout() {
           name="paywall"
           options={{ presentation: 'modal' }}
         />
-        <Stack.Screen name="card-test" />
       </Stack>
       <ToastRoot />
     </>

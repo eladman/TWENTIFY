@@ -1,63 +1,42 @@
-import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
-import { BottomSheet } from '@/components/ui/BottomSheet';
 import { colors } from '@/theme/colors';
 import { screenPadding } from '@/theme/spacing';
-import { toast } from '@/utils/toast';
+import { usePlanStore } from '@/stores/usePlanStore';
+
+function getTodayPlan() {
+  const { weeklySchedule } = usePlanStore.getState();
+  if (weeklySchedule.length === 0) return null;
+
+  const jsDay = new Date().getDay(); // Sun=0 .. Sat=6
+  const dayPlanIndex = (jsDay + 6) % 7; // Mon=0 .. Sun=6
+  return weeklySchedule.find((d) => d.dayOfWeek === dayPlanIndex) ?? null;
+}
 
 export default function TodayScreen() {
-  const router = useRouter();
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const weeklySchedule = usePlanStore((s) => s.weeklySchedule);
+  const todayPlan = weeklySchedule.length > 0 ? getTodayPlan() : null;
+
+  let subtitle: string;
+  if (!todayPlan) {
+    subtitle = 'No plan yet';
+  } else if (todayPlan.activity === 'rest') {
+    subtitle = 'Today: Rest Day';
+  } else {
+    subtitle = `Today: ${todayPlan.label} (${todayPlan.estimatedDurationMin} min)`;
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.container}>
         <Text variant="heading.xl">Today's 20%</Text>
         <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
-          Your plan for today will appear here.
+          {subtitle}
         </Text>
-        <Button
-          variant="secondary"
-          label="Card Test"
-          onPress={() => router.push('/card-test')}
-          style={styles.devButton}
-        />
-        <Button
-          variant="secondary"
-          label="Test Toast"
-          onPress={() => toast.show('Set completed')}
-          style={styles.devButton}
-        />
-        <Button
-          variant="secondary"
-          label="Test Success Toast"
-          onPress={() => toast.success('Workout saved')}
-          style={styles.devButton}
-        />
-        <Button
-          variant="secondary"
-          label="Test Error Toast"
-          onPress={() => toast.error('Failed to sync')}
-          style={styles.devButton}
-        />
-        <Button
-          variant="secondary"
-          label="Test Bottom Sheet"
-          onPress={() => setSheetOpen(true)}
-          style={styles.devButton}
-        />
-        <BottomSheet visible={sheetOpen} onDismiss={() => setSheetOpen(false)}>
-          <View style={styles.sheetContent}>
-            <Text variant="heading.md">Bottom Sheet Test</Text>
-            <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
-              Swipe down or tap backdrop to dismiss
-            </Text>
-          </View>
-        </BottomSheet>
+        <Text variant="body.sm" color={colors.textSecondary} style={styles.phase}>
+          Full workout experience coming in Phase 3
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -76,10 +55,7 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: 8,
   },
-  devButton: {
-    marginTop: 24,
-  },
-  sheetContent: {
-    padding: 24,
+  phase: {
+    marginTop: 16,
   },
 });

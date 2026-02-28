@@ -17,8 +17,9 @@ export interface UserProfile {
   hasHrMonitor?: boolean;
   tdeeEstimated?: number;
   proteinTargetG?: number;
-  gymDaysPerWeek?: 3 | 4;
-  runDaysPerWeek?: 2 | 3;
+  gymDaysPerWeek?: 2 | 3 | 4;
+  trainingDaysPerWeek?: 3 | 4 | 5;
+  runDaysPerWeek?: 1 | 2 | 3;
 }
 
 export interface UserSettings {

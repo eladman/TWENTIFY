@@ -34,3 +34,31 @@ export interface CompletedRun {
   distanceMeters?: number;
   avgHr?: number;
 }
+
+// ── Segment-based run types ───────────────────────────────────────────
+
+export type RunSegmentType = 'walk' | 'run' | 'warmup' | 'cooldown' | 'work' | 'recovery';
+
+export interface RunSegment {
+  type: RunSegmentType;
+  durationSeconds: number;
+  targetIntensity: string;
+  targetHRPercent?: { min: number; max: number };
+}
+
+export interface RunSession {
+  id: string;
+  name: string;
+  type: RunSessionType;
+  description: string;
+  totalDurationMinutes: number;
+  segments: RunSegment[];
+  citationIds: string[];
+  talkTestGuidance: string;
+}
+
+export interface WalkRunWeek {
+  week: number;
+  sessions: RunSession[];
+  description: string;
+}
