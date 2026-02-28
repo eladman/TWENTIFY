@@ -16,6 +16,7 @@ import {
   IBMPlexMono_600SemiBold,
 } from '@expo-google-fonts/ibm-plex-mono';
 import { colors } from '@/theme/colors';
+import { ToastRoot } from '@/components/ui/Toast';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -70,6 +71,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="card-test" />
       </Stack>
+      <ToastRoot />
     </>
   );
 }

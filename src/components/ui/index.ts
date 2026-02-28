@@ -4,4 +4,4 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { Badge } from './Badge';
 export { BottomSheet } from './BottomSheet';
-export { Toast } from './Toast';
+export { ToastRoot } from './Toast';
