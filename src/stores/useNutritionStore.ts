@@ -19,8 +19,10 @@ function emptyCheckin(): NutritionCheckin {
 
 interface NutritionState {
   todayCheckin: NutritionCheckin;
+  history: NutritionCheckin[];
 
   ensureToday: () => void;
+  resetToday: () => void;
   logProteinPortion: () => void;
   logVeggiePortion: () => void;
   logWater: () => void;
@@ -31,13 +33,25 @@ export const useNutritionStore = create<NutritionState>()(
   persist(
     (set, get) => ({
       todayCheckin: emptyCheckin(),
+      history: [],
 
       ensureToday: () => {
         const today = getTodayDate();
-        if (get().todayCheckin.date !== today) {
-          set({ todayCheckin: emptyCheckin() });
+        const stale = get().todayCheckin;
+        if (stale.date !== today) {
+          const hasData =
+            stale.proteinServings > 0 ||
+            stale.veggieServings > 0 ||
+            stale.waterGlasses > 0 ||
+            stale.followedPlan !== null;
+          set({
+            todayCheckin: emptyCheckin(),
+            ...(hasData ? { history: [...get().history, stale] } : {}),
+          });
         }
       },
+
+      resetToday: () => set({ todayCheckin: emptyCheckin() }),
 
       logProteinPortion: () =>
         set((state) => ({

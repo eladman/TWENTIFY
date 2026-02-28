@@ -5,3 +5,4 @@ export { Card } from './Card';
 export { Badge } from './Badge';
 export { BottomSheet } from './BottomSheet';
 export { ToastRoot } from './Toast';
+export { TabBar } from './TabBar';

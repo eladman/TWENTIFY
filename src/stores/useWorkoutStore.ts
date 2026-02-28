@@ -14,9 +14,11 @@ interface WorkoutState {
 
   startWorkout: (template: WorkoutTemplate) => void;
   completeSet: (exerciseIndex: number, setIndex: number, data: SetData) => void;
+  skipSet: (exerciseIndex: number, setIndex: number) => void;
   nextSet: () => void;
   finishWorkout: () => void;
   abandonWorkout: () => void;
+  getLastSessionForExercise: (exerciseId: string) => SetData[] | null;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -50,6 +52,15 @@ export const useWorkoutStore = create<WorkoutState>()(
             activeSession: { ...state.activeSession, exercises },
           };
         }),
+
+      skipSet: (exerciseIndex, setIndex) => {
+        get().completeSet(exerciseIndex, setIndex, {
+          reps: 0,
+          weightKg: 0,
+          completed: false,
+        });
+        get().nextSet();
+      },
 
       nextSet: () =>
         set((state) => {
@@ -101,6 +112,17 @@ export const useWorkoutStore = create<WorkoutState>()(
         }),
 
       abandonWorkout: () => set({ activeSession: null }),
+
+      getLastSessionForExercise: (exerciseId) => {
+        const { history } = get();
+        for (let i = history.length - 1; i >= 0; i--) {
+          const ex = history[i].exercises.find(
+            (e) => e.exerciseId === exerciseId
+          );
+          if (ex) return ex.sets;
+        }
+        return null;
+      },
     }),
     {
       name: 'workout-store',

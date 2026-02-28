@@ -15,7 +15,14 @@ interface PlanState {
   setGymPlan: (plan: GymPlan) => void;
   setRunPlan: (plan: RunPlan) => void;
   setNutritionPlan: (plan: NutritionPlan) => void;
+  setPlan: (plan: {
+    weeklySchedule: DayPlan[];
+    gymPlan?: GymPlan;
+    runPlan?: RunPlan;
+    nutritionPlan?: NutritionPlan;
+  }) => void;
   advanceWeek: () => void;
+  clearPlan: () => void;
   reset: () => void;
 }
 
@@ -36,7 +43,15 @@ export const usePlanStore = create<PlanState>()(
       setGymPlan: (plan) => set({ gymPlan: plan }),
       setRunPlan: (plan) => set({ runPlan: plan }),
       setNutritionPlan: (plan) => set({ nutritionPlan: plan }),
+      setPlan: (plan) =>
+        set({
+          weeklySchedule: plan.weeklySchedule,
+          gymPlan: plan.gymPlan ?? null,
+          runPlan: plan.runPlan ?? null,
+          nutritionPlan: plan.nutritionPlan ?? null,
+        }),
       advanceWeek: () => set((state) => ({ currentWeek: state.currentWeek + 1 })),
+      clearPlan: () => set(initialState),
       reset: () => set(initialState),
     }),
     {
