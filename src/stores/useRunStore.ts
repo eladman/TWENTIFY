@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandStorage } from './storage';
-import type { ActiveRun, CompletedRun, RunTemplate } from '@/types/run';
+import type { ActiveRun, CompletedRun, RunTemplate, RunSessionType } from '@/types/run';
 
 interface RunState {
   activeSession: ActiveRun | null;
@@ -12,7 +12,7 @@ interface RunState {
   updateDistance: (meters: number) => void;
   advanceInterval: () => void;
   togglePause: () => void;
-  finishRun: () => void;
+  finishRun: (sessionType: RunSessionType) => void;
   abandonRun: () => void;
 }
 
@@ -71,13 +71,13 @@ export const useRunStore = create<RunState>()(
           };
         }),
 
-      finishRun: () =>
+      finishRun: (sessionType) =>
         set((state) => {
           if (!state.activeSession) return state;
           const completed: CompletedRun = {
             id: Date.now().toString(),
             templateId: state.activeSession.templateId,
-            sessionType: 'easy', // will be derived from template in real implementation
+            sessionType,
             startedAt: state.activeSession.startedAt,
             completedAt: new Date().toISOString(),
             durationSeconds: state.activeSession.elapsedSeconds,

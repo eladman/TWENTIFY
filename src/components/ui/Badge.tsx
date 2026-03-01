@@ -3,7 +3,7 @@ import { Text } from './Text';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 
-type BadgeVariant = 'accent' | 'success' | 'muted';
+type BadgeVariant = 'accent' | 'success' | 'muted' | 'warning' | 'error';
 
 interface BadgeProps {
   label: string;
@@ -14,12 +14,16 @@ const bgColors: Record<BadgeVariant, string> = {
   accent: colors.accentLight,
   success: '#E8F9EE',
   muted: '#F0F0F2',
+  warning: '#FFF3E0',
+  error: '#FFEBEE',
 };
 
 const textColors: Record<BadgeVariant, string> = {
   accent: colors.accent,
   success: colors.success,
   muted: colors.textSecondary,
+  warning: colors.warning,
+  error: colors.error,
 };
 
 export function Badge({ label, variant = 'accent' }: BadgeProps) {

@@ -1,0 +1,232 @@
+import { View, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Card } from '@/components/ui/Card';
+import { Text } from '@/components/ui/Text';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { colors } from '@/theme/colors';
+import { spacing } from '@/theme/spacing';
+import { exercises } from '@/data/exercises';
+import { useWorkoutStore } from '@/stores/useWorkoutStore';
+import { useRunStore } from '@/stores/useRunStore';
+import { formatDuration, formatReps } from '@/utils/formatters';
+import type { TodayState } from './useToday';
+import type { DayPlan } from '@/types/plan';
+import type { CompletedWorkout } from '@/types/workout';
+import type { CompletedRun } from '@/types/run';
+
+interface ActivityCardProps {
+  state: TodayState;
+  todayPlan: DayPlan | null;
+  completedWorkout: CompletedWorkout | null;
+  completedRun: CompletedRun | null;
+}
+
+const REST_QUOTES = [
+  { text: 'The magic happens between workouts, not during them.', author: 'Dr. Andy Galpin' },
+  { text: 'Rest is not the absence of training — it is part of training.', author: 'Tudor Bompa' },
+  { text: 'Recovery is where adaptation happens.', author: 'Dr. Mike Israetel' },
+];
+
+export function ActivityCard({ state, todayPlan, completedWorkout, completedRun }: ActivityCardProps) {
+  const router = useRouter();
+  const startWorkout = useWorkoutStore((s) => s.startWorkout);
+  const startRun = useRunStore((s) => s.startRun);
+
+  if (state === 'no_plan') {
+    return (
+      <Card variant="workout">
+        <Badge label="GET STARTED" variant="muted" />
+        <Text variant="heading.md" style={styles.title}>
+          No Plan Yet
+        </Text>
+        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
+          Complete the onboarding to get your personalized training plan.
+        </Text>
+      </Card>
+    );
+  }
+
+  if (state === 'completed_today') {
+    const duration = completedWorkout?.durationSeconds ?? completedRun?.durationSeconds ?? 0;
+    const exerciseCount = completedWorkout?.exercises.length;
+
+    return (
+      <Card variant="workout">
+        <Badge label="COMPLETED" variant="success" />
+        <Text variant="heading.md" style={styles.title}>
+          Done for today
+        </Text>
+        <View style={styles.summaryRow}>
+          {duration > 0 && (
+            <Text variant="body.md" color={colors.textSecondary}>
+              {formatDuration(duration)}
+            </Text>
+          )}
+          {exerciseCount && (
+            <Text variant="body.md" color={colors.textSecondary}>
+              {exerciseCount} exercises
+            </Text>
+          )}
+        </View>
+      </Card>
+    );
+  }
+
+  if (state === 'scheduled_workout' && todayPlan?.workoutTemplate) {
+    const template = todayPlan.workoutTemplate;
+    const exerciseCount = template.exercises.length;
+
+    const handleStart = () => {
+      startWorkout(template);
+      router.push(`/workout/${template.id}`);
+    };
+
+    return (
+      <Card variant="workout">
+        <Badge label="READY" variant="accent" />
+        <Text variant="heading.md" style={styles.title}>
+          {template.name}
+        </Text>
+        <Text variant="body.sm" color={colors.textSecondary} style={styles.subtitle}>
+          {exerciseCount} exercises · {todayPlan.estimatedDurationMin} min
+        </Text>
+
+        <View style={styles.exerciseList}>
+          {template.exercises.slice(0, 5).map((ex, i) => {
+            const exData = exercises[ex.exerciseId];
+            const name = exData?.name ?? ex.exerciseId;
+            const sets = ex.sets.length;
+            const reps = ex.sets[0]
+              ? formatReps(ex.sets[0].targetReps[0], ex.sets[0].targetReps[1])
+              : '';
+
+            return (
+              <View key={ex.exerciseId} style={styles.exerciseRow}>
+                <Text variant="body.sm" color={colors.textSecondary} style={styles.exerciseIndex}>
+                  {i + 1}
+                </Text>
+                <Text variant="body.sm" style={styles.exerciseName} numberOfLines={1}>
+                  {name}
+                </Text>
+                <Text variant="body.sm" color={colors.textMuted}>
+                  {sets}×{reps}
+                </Text>
+              </View>
+            );
+          })}
+          {exerciseCount > 5 && (
+            <Text variant="body.sm" color={colors.textMuted} style={styles.moreText}>
+              +{exerciseCount - 5} more
+            </Text>
+          )}
+        </View>
+
+        <Button
+          label="Start Workout →"
+          onPress={handleStart}
+          fullWidth
+          style={styles.startButton}
+        />
+      </Card>
+    );
+  }
+
+  if (state === 'scheduled_run' && todayPlan?.runTemplate) {
+    const template = todayPlan.runTemplate;
+    const isWalkRun = template.type === 'walk_run';
+
+    const handleStart = () => {
+      startRun(template);
+      router.push('/run/active');
+    };
+
+    return (
+      <Card variant="workout">
+        <Badge
+          label={template.type.toUpperCase().replace('_', ' ')}
+          variant={isWalkRun ? 'warning' : 'accent'}
+        />
+        <Text variant="heading.md" style={styles.title}>
+          {template.name}
+        </Text>
+        <Text variant="body.sm" color={colors.textSecondary} style={styles.subtitle}>
+          {todayPlan.estimatedDurationMin} min
+          {template.targetZone ? ` · ${template.targetZone}` : ''}
+        </Text>
+
+        <Button
+          label="Start Run →"
+          onPress={handleStart}
+          fullWidth
+          style={styles.startButton}
+        />
+      </Card>
+    );
+  }
+
+  if (state === 'rest_day') {
+    const quote = REST_QUOTES[new Date().getDay() % REST_QUOTES.length];
+
+    return (
+      <Card variant="workout">
+        <Badge label="REST DAY" variant="muted" />
+        <Text variant="heading.md" style={styles.title}>
+          Recovery Day
+        </Text>
+        <Text variant="body.md" color={colors.textSecondary} style={styles.quoteText}>
+          "{quote.text}"
+        </Text>
+        <Text variant="caption" color={colors.textMuted} style={styles.quoteAuthor}>
+          — {quote.author}
+        </Text>
+      </Card>
+    );
+  }
+
+  return null;
+}
+
+const styles = StyleSheet.create({
+  title: {
+    marginTop: spacing.md,
+  },
+  subtitle: {
+    marginTop: spacing.xs,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  exerciseList: {
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  exerciseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  exerciseIndex: {
+    width: 20,
+    color: colors.textMuted,
+  },
+  exerciseName: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  moreText: {
+    marginTop: spacing.xs,
+    marginLeft: 20,
+  },
+  startButton: {
+    marginTop: spacing.xl,
+  },
+  quoteText: {
+    marginTop: spacing.lg,
+    fontStyle: 'italic',
+  },
+  quoteAuthor: {
+    marginTop: spacing.sm,
+  },
+});

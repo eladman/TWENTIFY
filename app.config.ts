@@ -38,6 +38,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         color: '#0071E3',
       },
     ],
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission: 'Allow Twentify to track your run distance.',
+      },
+    ],
   ],
   newArchEnabled: true,
   experiments: {

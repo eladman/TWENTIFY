@@ -1,43 +1,78 @@
-import { View, StyleSheet } from 'react-native';
+import { ScrollView, RefreshControl, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme/colors';
-import { screenPadding } from '@/theme/spacing';
-import { usePlanStore } from '@/stores/usePlanStore';
-
-function getTodayPlan() {
-  const { weeklySchedule } = usePlanStore.getState();
-  if (weeklySchedule.length === 0) return null;
-
-  const jsDay = new Date().getDay(); // Sun=0 .. Sat=6
-  const dayPlanIndex = (jsDay + 6) % 7; // Mon=0 .. Sun=6
-  return weeklySchedule.find((d) => d.dayOfWeek === dayPlanIndex) ?? null;
-}
+import { spacing, screenPadding } from '@/theme/spacing';
+import { formatDate } from '@/utils/formatters';
+import { useToday } from '@/components/today/useToday';
+import { ActivityCard } from '@/components/today/ActivityCard';
+import { NutritionCard } from '@/components/today/NutritionCard';
+import { WeekStrip } from '@/components/today/WeekStrip';
 
 export default function TodayScreen() {
-  const weeklySchedule = usePlanStore((s) => s.weeklySchedule);
-  const todayPlan = weeklySchedule.length > 0 ? getTodayPlan() : null;
-
-  let subtitle: string;
-  if (!todayPlan) {
-    subtitle = 'No plan yet';
-  } else if (todayPlan.activity === 'rest') {
-    subtitle = 'Today: Rest Day';
-  } else {
-    subtitle = `Today: ${todayPlan.label} (${todayPlan.estimatedDurationMin} min)`;
-  }
+  const data = useToday();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.container}>
-        <Text variant="heading.xl">Today's 20%</Text>
-        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
-          {subtitle}
-        </Text>
-        <Text variant="body.sm" color={colors.textSecondary} style={styles.phase}>
-          Full workout experience coming in Phase 3
-        </Text>
-      </View>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={data.refreshing}
+            onRefresh={data.onRefresh}
+            tintColor={colors.accent}
+          />
+        }
+      >
+        <View style={styles.header}>
+          <Text variant="heading.xl">Today's 20%</Text>
+          <Text variant="body.sm" color={colors.textSecondary}>
+            {formatDate(data.selectedDate)}
+          </Text>
+        </View>
+
+        <Animated.View
+          entering={FadeInDown.delay(0).duration(400).springify()}
+          style={styles.cardSpacing}
+        >
+          <ActivityCard
+            state={data.state}
+            todayPlan={data.todayPlan}
+            completedWorkout={data.completedWorkout}
+            completedRun={data.completedRun}
+          />
+        </Animated.View>
+
+        {data.hasNutritionDomain && (
+          <Animated.View
+            entering={FadeInDown.delay(80).duration(400).springify()}
+            style={styles.cardSpacing}
+          >
+            <NutritionCard
+              proteinLogged={data.proteinLogged}
+              proteinTarget={data.proteinTarget}
+              onLogProtein={data.onLogProtein}
+            />
+          </Animated.View>
+        )}
+
+        {data.state !== 'no_plan' && (
+          <Animated.View
+            entering={FadeInDown.delay(160).duration(400).springify()}
+            style={styles.cardSpacing}
+          >
+            <WeekStrip
+              weekDays={data.weekDays}
+              completedCount={data.completedCount}
+              totalScheduled={data.totalScheduled}
+              onSelectDay={data.onSelectDay}
+            />
+          </Animated.View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -47,15 +82,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  container: {
+  scroll: {
     flex: 1,
+  },
+  content: {
     paddingHorizontal: screenPadding.horizontal,
     paddingTop: screenPadding.top,
+    paddingBottom: screenPadding.bottom + 20,
   },
-  subtitle: {
-    marginTop: 8,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: spacing.xl,
   },
-  phase: {
-    marginTop: 16,
+  cardSpacing: {
+    marginBottom: spacing.lg,
   },
 });
