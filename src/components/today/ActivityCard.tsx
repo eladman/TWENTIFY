@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { exercises } from '@/data/exercises';
-import { useWorkoutStore } from '@/stores/useWorkoutStore';
-import { useRunStore } from '@/stores/useRunStore';
+import { usePlanStore } from '@/stores/usePlanStore';
 import { formatDuration, formatReps } from '@/utils/formatters';
 import type { TodayState } from './useToday';
 import type { DayPlan } from '@/types/plan';
@@ -30,8 +29,7 @@ const REST_QUOTES = [
 
 export function ActivityCard({ state, todayPlan, completedWorkout, completedRun }: ActivityCardProps) {
   const router = useRouter();
-  const startWorkout = useWorkoutStore((s) => s.startWorkout);
-  const startRun = useRunStore((s) => s.startRun);
+  const currentWeek = usePlanStore((s) => s.currentWeek);
 
   if (state === 'no_plan') {
     return (
@@ -78,7 +76,6 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
     const exerciseCount = template.exercises.length;
 
     const handleStart = () => {
-      startWorkout(template);
       router.push(`/workout/${template.id}`);
     };
 
@@ -137,8 +134,14 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
     const isWalkRun = template.type === 'walk_run';
 
     const handleStart = () => {
-      startRun(template);
-      router.push('/run/active');
+      router.push({
+        pathname: '/run/active',
+        params: {
+          sessionType: template.type,
+          weekNumber: String(currentWeek),
+          sessionIndex: '0',
+        },
+      });
     };
 
     return (

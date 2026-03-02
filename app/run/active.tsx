@@ -111,6 +111,12 @@ export default function ActiveRunScreen() {
 
   const isPaused = activeSession?.isPaused ?? false;
 
+  // ── isPausedRef for GPS callback (avoids stale closure) ──────────
+  const isPausedRef = useRef(false);
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
   // ── Mount: load session, start run, keep-awake ──────────────────
   useEffect(() => {
     const session = getRunSessionForDay(sessionType, weekNumber, sessionIndex);
@@ -155,7 +161,7 @@ export default function ActiveRunScreen() {
           distanceInterval: 5,
         },
         (loc) => {
-          if (isPaused) return;
+          if (isPausedRef.current) return;
           const { latitude, longitude } = loc.coords;
           if (lastCoordsRef.current) {
             const delta = haversineMeters(
@@ -188,6 +194,19 @@ export default function ActiveRunScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Elapsed pause tracking ─────────────────────────────────────
+  const elapsedPausedMsRef = useRef(0);
+  const elapsedPauseStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isPaused) {
+      elapsedPauseStartRef.current = Date.now();
+    } else if (elapsedPauseStartRef.current !== null) {
+      elapsedPausedMsRef.current += Date.now() - elapsedPauseStartRef.current;
+      elapsedPauseStartRef.current = null;
+    }
+  }, [isPaused]);
 
   // ── Segment pause tracking ─────────────────────────────────────
   useEffect(() => {
@@ -273,7 +292,9 @@ export default function ActiveRunScreen() {
 
     const tick = () => {
       if (!startedAtRef.current) return;
-      const elapsed = Math.floor((Date.now() - startedAtRef.current.getTime()) / 1000);
+      const elapsed = Math.floor(
+        (Date.now() - startedAtRef.current.getTime() - elapsedPausedMsRef.current) / 1000
+      );
       updateElapsed(elapsed);
     };
 

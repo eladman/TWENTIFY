@@ -115,6 +115,7 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
   const [showFlash, setShowFlash] = useState(false);
   const hasStartedRef = useRef(false);
   const hasFinishedRef = useRef(false);
+  const capturedRestSecondsRef = useRef(90);
 
   // Start workout on mount
   useEffect(() => {
@@ -211,10 +212,12 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
     if (isLastSet && isLastExercise) {
       setPhase('complete');
     } else if (isLastSet) {
+      capturedRestSecondsRef.current = currentExercise?.restSeconds ?? 90;
       nextSet();
       setPhase('transition');
       setTimeout(() => setPhase('rest'), 300);
     } else {
+      capturedRestSecondsRef.current = currentExercise?.restSeconds ?? 90;
       nextSet();
       setPhase('rest');
     }
@@ -233,8 +236,8 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
     setPhase('exercise');
   }, []);
 
-  // Rest seconds
-  const restSeconds = currentExercise?.restSeconds ?? 90;
+  // Rest seconds — captured at rest-phase entry to avoid flicker when exerciseIndex advances
+  const restSeconds = capturedRestSecondsRef.current;
 
   // Next set info for rest timer
   const nextSetInfo = useMemo(() => {
