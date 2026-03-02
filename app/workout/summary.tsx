@@ -1,59 +1,376 @@
-import { View, StyleSheet } from 'react-native';
+import { useMemo, useEffect } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
+import { useWorkoutStore } from '@/stores/useWorkoutStore';
+import { useUserStore } from '@/stores/useUserStore';
+import { exercises } from '@/data/exercises';
+import { citations } from '@/data/citations';
+import { formatVolume, formatWeight } from '@/utils/formatters';
+import type { SetData, CompletedWorkout } from '@/types/workout';
+
+// ── Helpers ─────────────────────────────────────────────────────────────
+
+function formatSummaryDuration(seconds: number): string {
+  if (seconds < 60) return '< 1 min';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m} min`;
+  return `${m} min`;
+}
+
+function getWorkingWeight(sets: SetData[]): number {
+  const completed = sets.filter((s) => s.completed);
+  if (completed.length === 0) return 0;
+  const counts = new Map<number, number>();
+  for (const s of completed) {
+    counts.set(s.weightKg, (counts.get(s.weightKg) ?? 0) + 1);
+  }
+  let mode = 0;
+  let maxCount = 0;
+  for (const [weight, count] of counts) {
+    if (count > maxCount || (count === maxCount && weight > mode)) {
+      mode = weight;
+      maxCount = count;
+    }
+  }
+  return mode;
+}
+
+function getPreviousSessionSets(
+  exerciseId: string,
+  history: CompletedWorkout[],
+): SetData[] | null {
+  // Search history[0..length-2] backward (exclude last entry which is the current workout)
+  for (let i = history.length - 2; i >= 0; i--) {
+    const ex = history[i].exercises.find((e) => e.exerciseId === exerciseId);
+    if (ex) return ex.sets;
+  }
+  return null;
+}
+
+// ── Fade-in hook ────────────────────────────────────────────────────────
+
+function useFadeIn(delay: number) {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.95);
+
+  useEffect(() => {
+    const config = { duration: 300, easing: Easing.out(Easing.ease) };
+    opacity.value = withDelay(delay, withTiming(1, config));
+    scale.value = withDelay(delay, withTiming(1, config));
+  }, []);
+
+  return useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+}
+
+// ── StatCell ────────────────────────────────────────────────────────────
+
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.statCell}>
+      <Text variant="caption" color={colors.textMuted}>
+        {label}
+      </Text>
+      <Text variant="data.lg" style={styles.statValue}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+// ── Screen ──────────────────────────────────────────────────────────────
 
 export default function WorkoutSummaryScreen() {
   const router = useRouter();
+  const history = useWorkoutStore((s) => s.history);
+  const units = useUserStore((s) => s.settings.units);
+
+  const workout = history[history.length - 1];
+
+  const headingAnim = useFadeIn(0);
+  const gridAnim = useFadeIn(100);
+  const bottomAnim = useFadeIn(200);
 
   const handleDone = () => {
     router.dismissAll();
   };
 
+  // Edge case: no workout in history
+  if (!workout) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.fallback}>
+          <Text variant="heading.lg" align="center">
+            No Workout Data
+          </Text>
+          <Text
+            variant="body.md"
+            color={colors.textSecondary}
+            align="center"
+            style={styles.fallbackSub}
+          >
+            Complete a workout to see your summary.
+          </Text>
+          <Button variant="primary" label="Done" onPress={handleDone} fullWidth />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Computed stats ──────────────────────────────────────────────────
+
+  const duration = useMemo(
+    () => formatSummaryDuration(workout.durationSeconds),
+    [workout.durationSeconds],
+  );
+
+  const exerciseCount = workout.exercises.length;
+
+  const workingSets = useMemo(
+    () =>
+      workout.exercises.reduce(
+        (sum, ex) => sum + ex.sets.filter((s) => s.completed).length,
+        0,
+      ),
+    [workout.exercises],
+  );
+
+  const totalVolume = useMemo(() => {
+    const total = workout.exercises.reduce(
+      (sum, ex) =>
+        sum +
+        ex.sets
+          .filter((s) => s.completed)
+          .reduce((s, set) => s + set.weightKg * set.reps, 0),
+      0,
+    );
+    return formatVolume(total, units);
+  }, [workout.exercises, units]);
+
+  // ── Progress items ────────────────────────────────────────────────
+
+  const progressItems = useMemo(() => {
+    return workout.exercises
+      .map((ex) => {
+        const currentWeight = getWorkingWeight(ex.sets);
+        // Skip bodyweight (weight=0)
+        if (currentWeight === 0) return null;
+
+        const previousSets = getPreviousSessionSets(ex.exerciseId, history);
+        // Skip first-time exercises
+        if (!previousSets) return null;
+
+        const previousWeight = getWorkingWeight(previousSets);
+        if (previousWeight === 0) return null;
+
+        const exerciseData = exercises[ex.exerciseId];
+        return {
+          name: exerciseData?.name ?? ex.exerciseId,
+          currentWeightKg: currentWeight,
+          previousWeightKg: previousWeight,
+          increased: currentWeight > previousWeight,
+        };
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
+  }, [workout.exercises, history]);
+
+  const hasIncreases = progressItems.some((p) => p.increased);
+
+  // ── Citation selection ────────────────────────────────────────────
+
+  const citation = useMemo(() => {
+    if (progressItems.some((p) => p.increased)) {
+      return citations['kraemer_2004'];
+    }
+    const allCompleted = workout.exercises.every((ex) =>
+      ex.sets.every((s) => s.completed),
+    );
+    if (allCompleted) {
+      return citations['schoenfeld_2016_frequency'];
+    }
+    if (workingSets > 15) {
+      return citations['schoenfeld_2017_volume'];
+    }
+    return citations['iversen_2021'];
+  }, [progressItems, workout.exercises, workingSets]);
+
+  // ── Render ────────────────────────────────────────────────────────
+
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <View style={styles.center}>
-          <Text variant="heading.xl">Session Complete</Text>
-          <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
-            Workout summary will appear here.
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Heading */}
+        <Animated.View style={[styles.headingSection, headingAnim]}>
+          <Text variant="heading.lg" align="center">
+            Session Complete
           </Text>
-        </View>
+        </Animated.View>
 
-        <View style={styles.bottom}>
-          <Button
-            variant="primary"
-            label="Done"
-            onPress={handleDone}
-            fullWidth
-          />
-        </View>
-      </View>
+        {/* Stats Grid */}
+        <Animated.View style={gridAnim}>
+          <Card variant="info">
+            <View style={styles.gridRow}>
+              <StatCell label="Duration" value={duration} />
+              <StatCell label="Exercises" value={String(exerciseCount)} />
+            </View>
+            <View style={styles.gridRow}>
+              <StatCell label="Working Sets" value={String(workingSets)} />
+              <StatCell label="Total Volume" value={totalVolume} />
+            </View>
+          </Card>
+        </Animated.View>
+
+        {/* Progress section */}
+        {hasIncreases && (
+          <Animated.View style={[styles.progressSection, gridAnim]}>
+            <View style={styles.divider} />
+            <Text variant="heading.sm" style={styles.progressHeading}>
+              Progress
+            </Text>
+            {progressItems.map((item) => (
+              <View key={item.name} style={styles.progressRow}>
+                {item.increased ? (
+                  <Text variant="body.md">
+                    <Text variant="body.md" color={colors.success}>
+                      {'\u2191 '}
+                    </Text>
+                    {item.name}{' '}
+                    <Text variant="body.md" color={colors.textSecondary}>
+                      {formatWeight(item.previousWeightKg, units)}
+                    </Text>
+                    {' \u2192 '}
+                    {formatWeight(item.currentWeightKg, units)}
+                  </Text>
+                ) : (
+                  <Text variant="body.sm" color={colors.textSecondary}>
+                    {item.name} — {formatWeight(item.currentWeightKg, units)}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </Animated.View>
+        )}
+
+        {/* Citation */}
+        {citation && (
+          <Animated.View style={[styles.citationSection, bottomAnim]}>
+            <Text
+              variant="body.md"
+              color={colors.textSecondary}
+              align="center"
+              style={styles.citationText}
+            >
+              {`\u201C${citation.finding}\u201D`}
+            </Text>
+            <Text variant="caption" color={colors.textMuted} align="center">
+              {citation.authors.split(',')[0]} et al., {citation.year}
+            </Text>
+          </Animated.View>
+        )}
+
+        {/* Spacer */}
+        <View style={styles.spacer} />
+      </ScrollView>
+
+      {/* Done button */}
+      <Animated.View style={[styles.bottom, bottomAnim]}>
+        <Button
+          variant="primary"
+          label="Done →"
+          onPress={handleDone}
+          fullWidth
+        />
+      </Animated.View>
     </SafeAreaView>
   );
 }
+
+// ── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  container: {
+  scroll: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: screenPadding.horizontal,
+    paddingTop: spacing['4xl'],
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
+  headingSection: {
     alignItems: 'center',
+    marginBottom: spacing['3xl'],
   },
-  subtitle: {
-    marginTop: spacing.sm,
+  gridRow: {
+    flexDirection: 'row',
+  },
+  statCell: {
+    width: '50%',
+    paddingVertical: spacing.sm,
+  },
+  statValue: {
+    marginTop: spacing.xs,
+  },
+  progressSection: {
+    marginTop: spacing['2xl'],
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.cardBorder,
+    marginBottom: spacing.lg,
+  },
+  progressHeading: {
+    marginBottom: spacing.md,
+  },
+  progressRow: {
+    marginBottom: spacing.xs,
+  },
+  citationSection: {
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing['2xl'],
+  },
+  citationText: {
+    fontStyle: 'italic',
+    marginBottom: spacing.sm,
+  },
+  spacer: {
+    flex: 1,
+    minHeight: spacing['3xl'],
   },
   bottom: {
+    paddingHorizontal: screenPadding.horizontal,
     paddingBottom: spacing.xl,
+  },
+  fallback: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: screenPadding.horizontal,
+  },
+  fallbackSub: {
+    marginTop: spacing.sm,
+    marginBottom: spacing['3xl'],
   },
 });
