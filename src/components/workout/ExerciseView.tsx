@@ -17,6 +17,7 @@ import { radius } from '@/theme/radius';
 import { haptics } from '@/utils/haptics';
 import { formatReps } from '@/utils/formatters';
 import { getCitationsForExercise } from '@/data/citations';
+import { getAlternatives } from '@/data/exercises';
 import type { Exercise } from '@/types/workout';
 import type { ExerciseProgression } from '@/services/progressiveOverload';
 
@@ -97,6 +98,7 @@ export function ExerciseView({
   }, [onCompleteSet]);
 
   const citations = getCitationsForExercise(exercise.id);
+  const alternatives = getAlternatives(exercise.id);
 
   return (
     <View style={styles.container}>
@@ -188,6 +190,7 @@ export function ExerciseView({
         </Text>
       </Pressable>
 
+      <View style={styles.completeBtnSpacer} />
       <View style={styles.completeBtn}>
         <Button
           variant="primary"
@@ -232,6 +235,22 @@ export function ExerciseView({
                   </Text>
                   <Text variant="body.sm">{cit.finding}</Text>
                 </View>
+              ))}
+            </View>
+          )}
+
+          {alternatives.length > 0 && (
+            <View style={styles.sheetSection}>
+              <Text variant="heading.sm">Alternatives</Text>
+              {alternatives.map((alt) => (
+                <Text
+                  key={alt.id}
+                  variant="body.sm"
+                  color={colors.textSecondary}
+                  style={styles.altItem}
+                >
+                  {'\u2022'} {alt.name}
+                </Text>
               ))}
             </View>
           )}
@@ -292,8 +311,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     paddingVertical: spacing.sm,
   },
+  completeBtnSpacer: {
+    flex: 1,
+  },
   completeBtn: {
-    marginTop: 'auto' as unknown as number,
     paddingBottom: spacing.lg,
   },
   sheetContent: {
@@ -311,5 +332,8 @@ const styles = StyleSheet.create({
   },
   citationItem: {
     marginTop: spacing.sm,
+  },
+  altItem: {
+    marginTop: spacing.xs,
   },
 });

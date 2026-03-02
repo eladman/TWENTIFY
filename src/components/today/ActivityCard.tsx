@@ -1,9 +1,11 @@
-import { View, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { Pressable, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ExerciseDetailSheet } from '@/components/workout/ExerciseDetailSheet';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { exercises } from '@/data/exercises';
@@ -30,6 +32,7 @@ const REST_QUOTES = [
 export function ActivityCard({ state, todayPlan, completedWorkout, completedRun }: ActivityCardProps) {
   const router = useRouter();
   const currentWeek = usePlanStore((s) => s.currentWeek);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
 
   if (state === 'no_plan') {
     return (
@@ -103,9 +106,19 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
                 <Text variant="body.sm" color={colors.textSecondary} style={styles.exerciseIndex}>
                   {i + 1}
                 </Text>
-                <Text variant="body.sm" style={styles.exerciseName} numberOfLines={1}>
-                  {name}
-                </Text>
+                <Pressable
+                  onPress={() => setSelectedExerciseId(ex.exerciseId)}
+                  style={styles.exerciseNameBtn}
+                >
+                  <Text
+                    variant="body.sm"
+                    color={colors.accent}
+                    style={styles.exerciseName}
+                    numberOfLines={1}
+                  >
+                    {name}
+                  </Text>
+                </Pressable>
                 <Text variant="body.sm" color={colors.textMuted}>
                   {sets}×{reps}
                 </Text>
@@ -124,6 +137,12 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
           onPress={handleStart}
           fullWidth
           style={styles.startButton}
+        />
+
+        <ExerciseDetailSheet
+          exerciseId={selectedExerciseId}
+          visible={selectedExerciseId !== null}
+          onDismiss={() => setSelectedExerciseId(null)}
         />
       </Card>
     );
@@ -214,9 +233,12 @@ const styles = StyleSheet.create({
     width: 20,
     color: colors.textMuted,
   },
-  exerciseName: {
+  exerciseNameBtn: {
     flex: 1,
     marginRight: spacing.sm,
+  },
+  exerciseName: {
+    flex: 1,
   },
   moreText: {
     marginTop: spacing.xs,

@@ -1,18 +1,259 @@
-import { View, StyleSheet } from 'react-native';
+import { ScrollView, Switch, Alert, Pressable, Linking, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ProfileRow } from '@/components/profile/ProfileRow';
+import { useUserStore } from '@/stores/useUserStore';
+import { usePlanStore } from '@/stores/usePlanStore';
+import { toast } from '@/utils/toast';
 import { colors } from '@/theme/colors';
-import { screenPadding } from '@/theme/spacing';
+import { spacing, screenPadding } from '@/theme/spacing';
+
+// ── Display name mappings ──
+
+const goalLabels: Record<string, string> = {
+  fat_loss: 'Fat loss',
+  muscle_build: 'Build muscle',
+  maintenance: 'Stay healthy',
+};
+
+const fitnessLabels: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+};
+
+const equipmentLabels: Record<string, string> = {
+  full_gym: 'Full gym',
+  dumbbells: 'Dumbbells only',
+  bodyweight: 'Bodyweight',
+};
+
+const gymPlanLabels: Record<string, string> = {
+  gym_2day: '2-Day Full Body',
+  gym_3day: '3-Day Full Body',
+  gym_4day: '4-Day Upper/Lower',
+};
+
+const runPlanLabels: Record<string, string> = {
+  run_1day: '1-Day Running',
+  run_2day: '2-Day Running',
+  run_3day: '3-Day Running',
+};
+
+const nutritionGoalLabels: Record<string, string> = {
+  fat_loss: 'Cut',
+  muscle_build: 'Bulk',
+  maintenance: 'Maintain',
+};
 
 export default function ProfileScreen() {
+  const router = useRouter();
+
+  // Individual selectors
+  const domains = useUserStore((s) => s.domains);
+  const goal = useUserStore((s) => s.goal);
+  const fitnessLevel = useUserStore((s) => s.fitnessLevel);
+  const profile = useUserStore((s) => s.profile);
+  const settings = useUserStore((s) => s.settings);
+  const subscriptionTier = useUserStore((s) => s.subscriptionTier);
+  const updateSettings = useUserStore((s) => s.updateSettings);
+
+  const gymPlan = usePlanStore((s) => s.gymPlan);
+  const runPlan = usePlanStore((s) => s.runPlan);
+
+  const hasGym = domains.includes('gym');
+  const hasRunning = domains.includes('running');
+  const hasNutrition = domains.includes('nutrition');
+
+  const handleResetPlan = () => {
+    Alert.alert(
+      'Reset Your Plan?',
+      'This will restart your onboarding. Your workout history will be kept.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            useUserStore.getState().reset();
+            usePlanStore.getState().clearPlan();
+            router.replace('/(onboarding)/domains');
+          },
+        },
+      ],
+    );
+  };
+
+  const programLabel =
+    gymPlan ? gymPlanLabels[gymPlan.type] ?? gymPlan.type :
+    runPlan ? runPlanLabels[runPlan.type] ?? runPlan.type :
+    undefined;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.container}>
-        <Text variant="heading.xl">Profile</Text>
-        <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
-          Your settings and account will appear here.
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text variant="heading.xl" style={styles.title}>Profile</Text>
+
+        {/* ── Your Domains ── */}
+        <Text variant="heading.md" style={styles.sectionTitle}>Your Domains</Text>
+        <Card variant="info">
+          {hasGym && (
+            <ProfileRow
+              label={`✅ 🏋️ Gym · ${profile?.gymDaysPerWeek ?? '–'} days/week`}
+              showDivider={hasRunning || hasNutrition}
+            />
+          )}
+          {hasRunning && (
+            <ProfileRow
+              label={`✅ 🏃 Running · ${profile?.runDaysPerWeek ?? '–'} days/week`}
+              showDivider={hasNutrition}
+            />
+          )}
+          {hasNutrition && (
+            <ProfileRow
+              label={`✅ 🍽 Nutrition · ${goal ? nutritionGoalLabels[goal] ?? goal : '–'}`}
+              showDivider={false}
+            />
+          )}
+        </Card>
+        <Button
+          variant="text"
+          label="Edit domains"
+          onPress={() => toast.show('Coming soon — re-run onboarding to change domains')}
+          style={styles.textButton}
+        />
+
+        {/* ── Plan ── */}
+        <Text variant="heading.md" style={styles.sectionTitle}>Plan</Text>
+        <Card variant="info">
+          <ProfileRow
+            label="Goal"
+            value={goal ? goalLabels[goal] ?? goal : '–'}
+          />
+          <ProfileRow
+            label="Fitness level"
+            value={fitnessLevel ? fitnessLabels[fitnessLevel] ?? fitnessLevel : '–'}
+          />
+          {hasGym && (
+            <ProfileRow
+              label="Equipment"
+              value={profile?.equipmentAccess ? equipmentLabels[profile.equipmentAccess] ?? profile.equipmentAccess : '–'}
+            />
+          )}
+          <ProfileRow
+            label="Program"
+            value={programLabel ?? '–'}
+            showDivider={false}
+          />
+        </Card>
+        <Button
+          variant="text"
+          label="Reset plan"
+          onPress={handleResetPlan}
+          style={styles.textButton}
+        />
+
+        {/* ── Settings ── */}
+        <Text variant="heading.md" style={styles.sectionTitle}>Settings</Text>
+        <Card variant="info">
+          <ProfileRow
+            label="Units"
+            right={
+              <SegmentedControl
+                options={['Metric', 'Imperial']}
+                selectedIndex={settings.units === 'metric' ? 0 : 1}
+                onChange={(index) =>
+                  updateSettings({ units: index === 0 ? 'metric' : 'imperial' })
+                }
+              />
+            }
+          />
+          <ProfileRow
+            label="Notifications"
+            right={
+              <Switch
+                value={settings.notifications}
+                onValueChange={(val) => updateSettings({ notifications: val })}
+                trackColor={{ false: colors.cardBorder, true: colors.accent }}
+                thumbColor="#FFF"
+              />
+            }
+          />
+          <ProfileRow
+            label="Reminder time"
+            value={settings.reminderTime}
+            onPress={() => toast.show('Coming soon')}
+            showDivider={false}
+          />
+        </Card>
+
+        {/* ── Subscription ── */}
+        <Text variant="heading.md" style={styles.sectionTitle}>Subscription</Text>
+        <Card variant="info">
+          <ProfileRow
+            label="Plan"
+            value={subscriptionTier === 'pro' ? 'Pro' : 'Free'}
+            showDivider={false}
+          />
+          {subscriptionTier === 'free' ? (
+            <Button
+              variant="primary"
+              label="Upgrade to Pro →"
+              onPress={() => router.push('/paywall')}
+              fullWidth
+              style={styles.upgradeButton}
+            />
+          ) : (
+            <View style={styles.proSection}>
+              <Text variant="body.sm" color={colors.success}>Pro member</Text>
+              <Button
+                variant="text"
+                label="Manage subscription"
+                onPress={() => toast.show('Coming soon')}
+              />
+            </View>
+          )}
+        </Card>
+
+        {/* ── About ── */}
+        <Text variant="heading.md" style={styles.sectionTitle}>About</Text>
+        <View>
+          <ProfileRow
+            label="Research sources"
+            onPress={() => toast.show('Coming soon')}
+          />
+          <ProfileRow
+            label="Privacy policy"
+            onPress={() => Linking.openURL('https://twentify.app/privacy')}
+          />
+          <ProfileRow
+            label="Terms of service"
+            onPress={() => Linking.openURL('https://twentify.app/terms')}
+          />
+          <ProfileRow
+            label="Contact support"
+            onPress={() => Linking.openURL('mailto:support@twentify.app')}
+            showDivider={false}
+          />
+        </View>
+
+        <Text
+          variant="caption"
+          color={colors.textMuted}
+          align="center"
+          style={styles.version}
+        >
+          Twentify v1.0.0
         </Text>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -22,12 +263,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  container: {
+  scroll: {
     flex: 1,
+  },
+  content: {
     paddingHorizontal: screenPadding.horizontal,
     paddingTop: screenPadding.top,
+    paddingBottom: screenPadding.bottom + 20,
   },
-  subtitle: {
-    marginTop: 8,
+  title: {
+    marginBottom: spacing.xl,
+  },
+  sectionTitle: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+  },
+  textButton: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
+  },
+  upgradeButton: {
+    marginTop: spacing.md,
+  },
+  proSection: {
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  version: {
+    marginTop: spacing['3xl'],
+    marginBottom: spacing.lg,
   },
 });
