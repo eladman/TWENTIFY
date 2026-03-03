@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
+import * as Notifications from 'expo-notifications';
+import { setupNotificationHandler, rescheduleReminders } from '@/services/notifications';
+import { useUserStore } from '@/stores/useUserStore';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   DMSans_400Regular,
@@ -21,6 +24,25 @@ import { ToastRoot } from '@/components/ui/Toast';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const router = useRouter();
+
+  // Notification setup on mount
+  useEffect(() => {
+    setupNotificationHandler();
+    const { onboardingCompleted, settings } = useUserStore.getState();
+    if (onboardingCompleted && settings.notifications) {
+      rescheduleReminders();
+    }
+  }, []);
+
+  // Navigate to Today when user taps a notification
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(() => {
+      router.replace('/(tabs)/today');
+    });
+    return () => subscription.remove();
+  }, [router]);
+
   const [fontsLoaded, fontError] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,

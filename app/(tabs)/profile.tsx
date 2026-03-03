@@ -9,6 +9,11 @@ import { ProfileRow } from '@/components/profile/ProfileRow';
 import { useUserStore } from '@/stores/useUserStore';
 import { usePlanStore } from '@/stores/usePlanStore';
 import { toast } from '@/utils/toast';
+import {
+  requestNotificationPermission,
+  rescheduleReminders,
+  cancelAllReminders,
+} from '@/services/notifications';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
 
@@ -181,7 +186,17 @@ export default function ProfileScreen() {
             right={
               <Switch
                 value={settings.notifications}
-                onValueChange={(val) => updateSettings({ notifications: val })}
+                onValueChange={async (val) => {
+                  if (val) {
+                    const granted = await requestNotificationPermission();
+                    if (!granted) return;
+                    updateSettings({ notifications: true });
+                    rescheduleReminders();
+                  } else {
+                    updateSettings({ notifications: false });
+                    cancelAllReminders();
+                  }
+                }}
                 trackColor={{ false: colors.cardBorder, true: colors.accent }}
                 thumbColor="#FFF"
               />

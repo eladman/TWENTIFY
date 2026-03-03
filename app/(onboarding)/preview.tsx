@@ -16,6 +16,7 @@ import { spacing } from '@/theme/spacing';
 import { haptics } from '@/utils/haptics';
 import { useUserStore } from '@/stores/useUserStore';
 import { usePlanStore } from '@/stores/usePlanStore';
+import { requestNotificationPermission, rescheduleReminders } from '@/services/notifications';
 import { generatePlan, type GeneratedPlan } from '@/services/planGenerator';
 import type { PlanInput, DayPlan } from '@/types/plan';
 
@@ -271,7 +272,7 @@ export default function PreviewScreen() {
   }));
 
   // Handle "Start My Plan"
-  const handleStartPlan = () => {
+  const handleStartPlan = async () => {
     haptics.success();
     setPlan({
       weeklySchedule: plan.weeklySchedule,
@@ -280,6 +281,10 @@ export default function PreviewScreen() {
       nutritionPlan: plan.nutritionPlan,
     });
     completeOnboarding();
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      await rescheduleReminders();
+    }
     router.replace('/(tabs)/today');
   };
 

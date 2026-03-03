@@ -3,3 +3,4 @@ export * from './workout';
 export * from './run';
 export * from './nutrition';
 export * from './plan';
+export * from './database';
