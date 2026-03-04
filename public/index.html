@@ -1032,6 +1032,85 @@ nav.scrolled .nav-cta { background: var(--text); color: #fff; }
   .trust-badges { flex-direction: column; align-items: center; gap: 12px; }
   .bg-orb { display: none; }
   .proof-metric-val { font-size: 44px; }
+  .waitlist-modal { margin: 16px; max-width: calc(100vw - 32px); }
+}
+
+/* ══════════════════ WAITLIST MODAL ══════════════════ */
+.waitlist-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.waitlist-overlay.active {
+  opacity: 1; visibility: visible;
+}
+.waitlist-modal {
+  background: #fff;
+  border-radius: var(--radius);
+  max-width: 480px; width: 100%;
+  padding: 48px 40px 40px;
+  position: relative;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+  transform: scale(0.92) translateY(16px);
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.waitlist-overlay.active .waitlist-modal {
+  transform: scale(1) translateY(0);
+}
+.waitlist-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: none; background: var(--bg);
+  font-size: 20px; color: var(--text-secondary);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+.waitlist-close:hover { background: rgba(0,0,0,0.08); color: var(--text); }
+.waitlist-modal h3 {
+  font-size: 28px; font-weight: 800; letter-spacing: -1px;
+  margin-bottom: 8px; color: var(--text);
+}
+.waitlist-modal > p {
+  font-size: 16px; color: var(--text-secondary);
+  line-height: 1.5; margin-bottom: 28px;
+}
+#waitlistForm { display: flex; flex-direction: column; gap: 12px; }
+#waitlistForm input {
+  width: 100%; padding: 14px 18px;
+  border: 1px solid var(--card-border);
+  border-radius: 14px; font-size: 15px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg); color: var(--text);
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+#waitlistForm input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,113,227,0.12);
+}
+#waitlistForm input::placeholder { color: var(--text-muted); }
+#waitlistForm .btn-primary { width: 100%; margin-top: 4px; }
+.waitlist-note {
+  font-size: 13px; color: var(--text-muted);
+  text-align: center; margin-top: 16px;
+}
+.waitlist-success {
+  text-align: center; padding: 20px 0;
+}
+.waitlist-success .success-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(48,209,88,0.12); color: var(--success);
+  font-size: 28px; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.waitlist-success h4 {
+  font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+  margin-bottom: 8px; color: var(--text);
+}
+.waitlist-success p {
+  font-size: 15px; color: var(--text-secondary); line-height: 1.5;
 }
 </style>
 </head>
@@ -1049,7 +1128,7 @@ nav.scrolled .nav-cta { background: var(--text); color: #fff; }
     <li><a href="#protocol">Protocol</a></li>
     <li><a href="#pricing">Pricing</a></li>
   </ul>
-  <a href="#pricing" class="nav-cta">Get Early Access</a>
+  <a href="javascript:void(0)" class="nav-cta" onclick="openWaitlistModal()">Join Waitlist</a>
 </nav>
 
 <!-- ══════════════════ HERO ══════════════════ -->
@@ -1071,10 +1150,11 @@ nav.scrolled .nav-cta { background: var(--text); color: #fff; }
     </h1>
     <p class="hero-sub-old">Gym. Running. Nutrition. Recovery. Only what the science says works.</p>
     <div class="hero-actions-old">
-      <a href="#pricing" class="btn-primary magnetic" style="padding: 16px 36px; font-size: 16px;">
+      <a href="javascript:void(0)" onclick="openWaitlistModal()" class="btn-primary magnetic" style="padding: 16px 36px; font-size: 16px;">
         <div class="bg-shift"></div>
-        <span class="content">Get Started Free <span class="btn-arrow">&rarr;</span></span>
+        <span class="content">Join the Waitlist <span class="btn-arrow">&rarr;</span></span>
       </a>
+      <p style="color: rgba(255,255,255,0.4); font-size: 14px; margin-top: 12px;">Get Pro free for a month when we launch &mdash; limited spots</p>
     </div>
     <div class="hero-stats">
       <div class="hero-stat-pill">
@@ -1488,7 +1568,7 @@ nav.scrolled .nav-cta { background: var(--text); color: #fff; }
           <li><div class="f-check">&#10003;</div> Guided daily sessions</li>
           <li><div class="f-check">&#10003;</div> Basic tracking</li>
         </ul>
-        <a href="#" class="p-btn p-btn-outline magnetic">Get Started Free</a>
+        <a href="javascript:void(0)" onclick="openWaitlistModal()" class="p-btn p-btn-outline magnetic">Join the Waitlist</a>
       </div>
 
       <div class="p-card pro fade-up">
@@ -1512,17 +1592,17 @@ nav.scrolled .nav-cta { background: var(--text); color: #fff; }
 <section class="final-cta bg-dot-grid">
   <div class="bg-orb cta-orb-1"></div>
   <div class="container--narrow">
-    <h2 class="fade-up">Stop overthinking.<br><span class="drama">Start the 20%.</span></h2>
-    <p class="final-cta-sub fade-up">Join thousands who train smarter, not longer.</p>
+    <h2 class="fade-up">Be the first to<br><span class="drama">train smarter.</span></h2>
+    <p class="final-cta-sub fade-up">Join the waitlist and get Pro free for your first month.</p>
     <div class="final-cta-actions fade-up">
-      <a href="#pricing" class="btn-primary magnetic" style="padding: 18px 44px; font-size: 17px;">
+      <a href="javascript:void(0)" onclick="openWaitlistModal()" class="btn-primary magnetic" style="padding: 18px 44px; font-size: 17px;">
         <div class="bg-shift"></div>
-        <span class="content">Get Started Free <span class="btn-arrow">&rarr;</span></span>
+        <span class="content">Join the Waitlist <span class="btn-arrow">&rarr;</span></span>
       </a>
     </div>
     <div class="trust-badges fade-up">
-      <div class="trust-badge">No credit card</div>
-      <div class="trust-badge">Cancel anytime</div>
+      <div class="trust-badge">Free Pro month at launch</div>
+      <div class="trust-badge">Limited spots</div>
       <div class="trust-badge">Science-backed</div>
     </div>
   </div>
@@ -1582,6 +1662,24 @@ nav.scrolled .nav-cta { background: var(--text); color: #fff; }
     </div>
   </div>
 </footer>
+
+<!-- ══════════════════ WAITLIST MODAL ══════════════════ -->
+<div class="waitlist-overlay" id="waitlistModal">
+  <div class="waitlist-modal">
+    <button class="waitlist-close" onclick="closeWaitlistModal()">&times;</button>
+    <h3>Join the Waitlist</h3>
+    <p>Enter your details and get the <strong>Pro version free for one month</strong> when we launch.</p>
+    <form id="waitlistForm" onsubmit="submitWaitlist(event)">
+      <input type="text" name="name" placeholder="Your name" required />
+      <input type="email" name="email" placeholder="Your email" required />
+      <button type="submit" class="btn-primary">
+        <div class="bg-shift"></div>
+        <span class="content">Get Early Access</span>
+      </button>
+    </form>
+    <p class="waitlist-note">Limited offer &mdash; free Pro access for the first month after launch.</p>
+  </div>
+</div>
 
 <!-- ══════════════════ SCRIPTS ══════════════════ -->
 <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
@@ -1779,6 +1877,88 @@ gsap.to('.cta-orb-1', {
     toggleActions: 'play pause resume pause',
   }
 });
+
+// ═══════════ Waitlist Modal ═══════════
+const SUPABASE_URL = 'https://cgdeahbfdtkewxjaitgf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnZGVhaGJmZHRrZXd4amFpdGdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0Njk0NDgsImV4cCI6MjA4ODA0NTQ0OH0.ghjXsXX7P1WtLOA6O2Wy5WlmJQyF9b2nx4MlnO3gpWc';
+
+const waitlistOverlay = document.getElementById('waitlistModal');
+
+function openWaitlistModal() {
+  waitlistOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeWaitlistModal() {
+  waitlistOverlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// Click outside to close
+waitlistOverlay.addEventListener('click', function(e) {
+  if (e.target === waitlistOverlay) closeWaitlistModal();
+});
+
+// Escape key to close
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && waitlistOverlay.classList.contains('active')) {
+    closeWaitlistModal();
+  }
+});
+
+function submitWaitlist(e) {
+  e.preventDefault();
+  const form = e.target;
+  const name = form.name.value.trim();
+  const email = form.email.value.trim();
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const btnContent = submitBtn.querySelector('.content');
+  const originalText = btnContent.innerHTML;
+
+  // Loading state
+  btnContent.innerHTML = 'Submitting...';
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.7';
+
+  fetch(SUPABASE_URL + '/rest/v1/waitlist', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ name: name, email: email })
+  })
+  .then(function(res) {
+    if (!res.ok) {
+      if (res.status === 409) throw new Error('This email is already on the waitlist.');
+      throw new Error('Something went wrong. Please try again.');
+    }
+    // Success state
+    var modalContent = waitlistOverlay.querySelector('.waitlist-modal');
+    modalContent.innerHTML =
+      '<button class="waitlist-close" onclick="closeWaitlistModal()">&times;</button>' +
+      '<div class="waitlist-success">' +
+        '<div class="success-icon">&#10003;</div>' +
+        '<h4>You\'re on the list!</h4>' +
+        '<p>We\'ll let you know when Twentify launches.<br>Your free Pro month is secured.</p>' +
+      '</div>';
+  })
+  .catch(function(err) {
+    btnContent.innerHTML = originalText;
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+    // Show error under the form
+    var existing = form.querySelector('.waitlist-error');
+    if (existing) existing.remove();
+    var errEl = document.createElement('p');
+    errEl.className = 'waitlist-error';
+    errEl.style.cssText = 'color:#FF3B30;font-size:13px;text-align:center;margin-top:8px;';
+    errEl.textContent = err.message;
+    form.appendChild(errEl);
+  });
+}
 
 </script>
 </body>
