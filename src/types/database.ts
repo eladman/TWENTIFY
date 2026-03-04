@@ -168,12 +168,14 @@ export interface Database {
           target_zone: string | null;
           intervals: Json | null;
           notes: string | null;
+          template_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id?: string | null;
           plan_id?: string | null;
+          template_id?: string | null;
           session_type: string;
           started_at: string;
           completed_at?: string | null;
@@ -293,7 +295,12 @@ export interface Database {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      ensure_user_record: {
+        Args: { p_email: string };
+        Returns: undefined;
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };
@@ -306,3 +313,7 @@ export type InsertTables<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Insert'];
 export type UpdateTables<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Update'];
+
+export function toJson<T>(value: T): Json {
+  return value as unknown as Json;
+}

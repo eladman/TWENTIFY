@@ -5,6 +5,7 @@ import { useRunStore } from '@/stores/useRunStore';
 import { useNutritionStore } from '@/stores/useNutritionStore';
 import { usePlanStore } from '@/stores/usePlanStore';
 import { generateUUID, isValidUUID } from '@/utils/uuid';
+import { toJson } from '@/types/database';
 import type { CompletedWorkout } from '@/types/workout';
 import type { CompletedRun } from '@/types/run';
 import type { NutritionCheckin } from '@/types/nutrition';
@@ -46,6 +47,7 @@ export async function syncUserProfile(): Promise<void> {
   if (!isReady()) return;
   try {
     const { authUserId, domains, goal, fitnessLevel, profile } = useUserStore.getState();
+    if (!goal || !fitnessLevel) return;
     await supabase!.from('user_profiles').upsert(
       {
         user_id: authUserId!,
@@ -83,7 +85,7 @@ export async function syncWorkoutSession(workout: CompletedWorkout): Promise<voi
         started_at: workout.startedAt,
         completed_at: workout.completedAt,
         duration_seconds: workout.durationSeconds,
-        exercises: workout.exercises,
+        exercises: toJson(workout.exercises),
       },
       { onConflict: 'id' },
     );
@@ -186,7 +188,7 @@ export async function syncPlan(): Promise<void> {
         .from('plans')
         .update({
           plan_type: 'generated',
-          plan_data: planData,
+          plan_data: toJson(planData),
           week_number: currentWeek,
         })
         .eq('id', existing.id));
@@ -194,7 +196,7 @@ export async function syncPlan(): Promise<void> {
       ({ error } = await supabase!.from('plans').insert({
         user_id: userId,
         plan_type: 'generated',
-        plan_data: planData,
+        plan_data: toJson(planData),
         week_number: currentWeek,
         is_active: true,
       }));
