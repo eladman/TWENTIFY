@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ScrollView, Switch, Alert, Pressable, Linking, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -6,9 +7,11 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ProfileRow } from '@/components/profile/ProfileRow';
+import { EmailAuthSheet } from '@/components/auth/EmailAuthSheet';
 import { useUserStore } from '@/stores/useUserStore';
 import { usePlanStore } from '@/stores/usePlanStore';
 import { toast } from '@/utils/toast';
+import { signInWithApple, signOut } from '@/services/auth';
 import {
   requestNotificationPermission,
   rescheduleReminders,
@@ -67,6 +70,11 @@ export default function ProfileScreen() {
   const subscriptionTier = useUserStore((s) => s.subscriptionTier);
   const updateSettings = useUserStore((s) => s.updateSettings);
 
+  const authUserId = useUserStore((s) => s.authUserId);
+  const authEmail = useUserStore((s) => s.authEmail);
+  const [emailSheetVisible, setEmailSheetVisible] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+
   const gymPlan = usePlanStore((s) => s.gymPlan);
   const runPlan = usePlanStore((s) => s.runPlan);
 
@@ -91,6 +99,36 @@ export default function ProfileScreen() {
         },
       ],
     );
+  };
+
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    try {
+      const user = await signInWithApple();
+      if (user) toast.success('Signed in!');
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Sign in failed');
+    } finally {
+      setAppleLoading(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Your data will stay on this device.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut();
+            toast.show('Signed out');
+          } catch (err: any) {
+            toast.error(err?.message ?? 'Sign out failed');
+          }
+        },
+      },
+    ]);
   };
 
   const programLabel =
@@ -210,6 +248,39 @@ export default function ProfileScreen() {
           />
         </Card>
 
+        {/* ── Account ── */}
+        <Text variant="heading.md" style={styles.sectionTitle}>Account</Text>
+        {authUserId ? (
+          <Card variant="info">
+            <Text variant="body.sm" color={colors.textSecondary}>Signed in as</Text>
+            <Text variant="body.md">{authEmail}</Text>
+            <View style={{ height: 12 }} />
+            <Button variant="text" label="Sign out" onPress={handleSignOut} />
+          </Card>
+        ) : (
+          <Card variant="info">
+            <Text variant="body.md">Sign in to back up your data</Text>
+            <Text variant="body.sm" color={colors.textSecondary}>
+              Your workouts stay on this device until you sign in.
+            </Text>
+            <View style={{ height: 16 }} />
+            <Button
+              variant="primary"
+              fullWidth
+              label="Continue with Apple"
+              onPress={handleAppleSignIn}
+              loading={appleLoading}
+            />
+            <View style={{ height: 8 }} />
+            <Button
+              variant="secondary"
+              fullWidth
+              label="Sign in with Email"
+              onPress={() => setEmailSheetVisible(true)}
+            />
+          </Card>
+        )}
+
         {/* ── Subscription ── */}
         <Text variant="heading.md" style={styles.sectionTitle}>Subscription</Text>
         <Card variant="info">
@@ -269,6 +340,11 @@ export default function ProfileScreen() {
           Twentify v1.0.0
         </Text>
       </ScrollView>
+
+      <EmailAuthSheet
+        visible={emailSheetVisible}
+        onDismiss={() => setEmailSheetVisible(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -1,0 +1,328 @@
+import { supabase, isSupabaseConfigured } from './supabase';
+import { useUserStore } from '@/stores/useUserStore';
+import { useWorkoutStore } from '@/stores/useWorkoutStore';
+import { useRunStore } from '@/stores/useRunStore';
+import { useNutritionStore } from '@/stores/useNutritionStore';
+import { usePlanStore } from '@/stores/usePlanStore';
+import { generateUUID, isValidUUID } from '@/utils/uuid';
+import type { CompletedWorkout } from '@/types/workout';
+import type { CompletedRun } from '@/types/run';
+import type { NutritionCheckin } from '@/types/nutrition';
+
+// ── Guard ─────────────────────────────────────────────────────────────────────
+
+function isReady(): boolean {
+  return isSupabaseConfigured() && !!supabase && !!useUserStore.getState().authUserId;
+}
+
+// ── Ensure public.users row exists ───────────────────────────────────────────
+
+let _userEnsured = false;
+
+export async function ensureUserRecord(): Promise<void> {
+  if (_userEnsured || !isReady()) return;
+  try {
+    const { authEmail } = useUserStore.getState();
+    const { error } = await supabase!.rpc('ensure_user_record', {
+      p_email: authEmail ?? '',
+    });
+    if (error) {
+      console.log('Sync: ensureUserRecord failed', error.message);
+      return;
+    }
+    _userEnsured = true;
+  } catch (e) {
+    console.log('Sync: ensureUserRecord error', e);
+  }
+}
+
+export function resetUserEnsured(): void {
+  _userEnsured = false;
+}
+
+// ── User profile ──────────────────────────────────────────────────────────────
+
+export async function syncUserProfile(): Promise<void> {
+  if (!isReady()) return;
+  try {
+    const { authUserId, domains, goal, fitnessLevel, profile } = useUserStore.getState();
+    await supabase!.from('user_profiles').upsert(
+      {
+        user_id: authUserId!,
+        domains,
+        goal,
+        fitness_level: fitnessLevel,
+        age: profile?.age ?? null,
+        weight_kg: profile?.weightKg ?? null,
+        height_cm: profile?.heightCm ?? null,
+        sex: profile?.sex ?? null,
+      },
+      { onConflict: 'user_id' },
+    );
+  } catch (e) {
+    console.log('Sync: user profile failed', e);
+  }
+}
+
+// ── Workout sessions ──────────────────────────────────────────────────────────
+
+export async function syncWorkoutSession(workout: CompletedWorkout): Promise<void> {
+  if (!isReady()) return;
+  let syncId = workout.id;
+  try {
+    if (!isValidUUID(syncId)) {
+      syncId = generateUUID();
+      useWorkoutStore.getState().updateWorkoutId(workout.id, syncId);
+    }
+    const userId = useUserStore.getState().authUserId!;
+    const { error } = await supabase!.from('workout_sessions').upsert(
+      {
+        id: syncId,
+        user_id: userId,
+        workout_template: workout.templateId,
+        started_at: workout.startedAt,
+        completed_at: workout.completedAt,
+        duration_seconds: workout.durationSeconds,
+        exercises: workout.exercises,
+      },
+      { onConflict: 'id' },
+    );
+    if (error) {
+      console.log('Sync: workout failed, will retry', syncId, error.message);
+    } else {
+      console.log('Sync: workout synced', syncId);
+      useWorkoutStore.getState().markWorkoutSynced(syncId);
+    }
+  } catch (e) {
+    console.log('Sync: workout failed, will retry', syncId, e);
+  }
+}
+
+// ── Run sessions ──────────────────────────────────────────────────────────────
+
+export async function syncRunSession(run: CompletedRun): Promise<void> {
+  if (!isReady()) return;
+  let syncId = run.id;
+  try {
+    if (!isValidUUID(syncId)) {
+      syncId = generateUUID();
+      useRunStore.getState().updateRunId(run.id, syncId);
+    }
+    const userId = useUserStore.getState().authUserId!;
+    const { error } = await supabase!.from('run_sessions').upsert(
+      {
+        id: syncId,
+        user_id: userId,
+        template_id: run.templateId,
+        session_type: run.sessionType,
+        started_at: run.startedAt,
+        completed_at: run.completedAt,
+        duration_seconds: run.durationSeconds,
+        distance_meters: run.distanceMeters ?? null,
+        avg_hr: run.avgHr ?? null,
+      },
+      { onConflict: 'id' },
+    );
+    if (error) {
+      console.log('Sync: run failed, will retry', syncId, error.message);
+    } else {
+      console.log('Sync: run synced', syncId);
+      useRunStore.getState().markRunSynced(syncId);
+    }
+  } catch (e) {
+    console.log('Sync: run failed, will retry', syncId, e);
+  }
+}
+
+// ── Nutrition checkins ────────────────────────────────────────────────────────
+
+export async function syncNutritionCheckin(checkin: NutritionCheckin): Promise<void> {
+  if (!isReady()) return;
+  try {
+    const userId = useUserStore.getState().authUserId!;
+    const { error } = await supabase!.from('nutrition_checkins').upsert(
+      {
+        user_id: userId,
+        date: checkin.date,
+        protein_servings: checkin.proteinServings,
+        veggie_servings: checkin.veggieServings,
+        water_glasses: checkin.waterGlasses,
+        followed_plan: checkin.followedPlan,
+      },
+      { onConflict: 'user_id,date' },
+    );
+    if (error) {
+      console.log('Sync: nutrition failed', checkin.date, error.message);
+    } else {
+      console.log('Sync: nutrition synced', checkin.date);
+    }
+  } catch (e) {
+    console.log('Sync: nutrition failed', checkin.date, e);
+  }
+}
+
+// ── Plan ──────────────────────────────────────────────────────────────────────
+
+export async function syncPlan(): Promise<void> {
+  if (!isReady()) return;
+  try {
+    const userId = useUserStore.getState().authUserId!;
+    const { weeklySchedule, gymPlan, runPlan, nutritionPlan, currentWeek } =
+      usePlanStore.getState();
+    const planData = { weeklySchedule, gymPlan, runPlan, nutritionPlan };
+
+    // PostgREST can't match partial unique indexes via onConflict,
+    // so use select-then-update/insert instead of upsert.
+    const { data: existing } = await supabase!
+      .from('plans')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    let error;
+    if (existing) {
+      ({ error } = await supabase!
+        .from('plans')
+        .update({
+          plan_type: 'generated',
+          plan_data: planData,
+          week_number: currentWeek,
+        })
+        .eq('id', existing.id));
+    } else {
+      ({ error } = await supabase!.from('plans').insert({
+        user_id: userId,
+        plan_type: 'generated',
+        plan_data: planData,
+        week_number: currentWeek,
+        is_active: true,
+      }));
+    }
+
+    if (error) {
+      console.log('Sync: plan failed', error.message);
+    } else {
+      console.log('Sync: plan synced');
+    }
+  } catch (e) {
+    console.log('Sync: plan failed', e);
+  }
+}
+
+// ── Sync all pending (retry queue) ────────────────────────────────────────────
+
+export async function syncAllPending(): Promise<void> {
+  if (!isReady()) return;
+  await ensureUserRecord();
+  try {
+    const unsynced = useWorkoutStore.getState().history.filter((w) => !w.synced);
+    for (const w of unsynced) await syncWorkoutSession(w);
+
+    const unsyncedRuns = useRunStore.getState().history.filter((r) => !r.synced);
+    for (const r of unsyncedRuns) await syncRunSession(r);
+
+    await syncNutritionCheckin(useNutritionStore.getState().todayCheckin);
+    await syncPlan();
+  } catch (e) {
+    console.log('Sync: syncAllPending error', e);
+  }
+}
+
+// ── Pull from cloud (fresh install restore) ───────────────────────────────────
+
+export async function pullFromCloud(): Promise<void> {
+  if (!isReady()) return;
+  await ensureUserRecord();
+  const workoutHistory = useWorkoutStore.getState().history;
+  const runHistory = useRunStore.getState().history;
+  if (workoutHistory.length !== 0 || runHistory.length !== 0) return;
+
+  try {
+    const userId = useUserStore.getState().authUserId!;
+
+    const [workoutsRes, runsRes, checkinsRes, plansRes, profileRes] = await Promise.all([
+      supabase!.from('workout_sessions').select('*').eq('user_id', userId),
+      supabase!.from('run_sessions').select('*').eq('user_id', userId),
+      supabase!.from('nutrition_checkins').select('*').eq('user_id', userId),
+      supabase!.from('plans').select('*').eq('user_id', userId).eq('is_active', true).single(),
+      supabase!.from('user_profiles').select('*').eq('user_id', userId).single(),
+    ]);
+
+    if (workoutsRes.data && workoutsRes.data.length > 0) {
+      const pulled: CompletedWorkout[] = workoutsRes.data.map((row: any) => ({
+        id: row.id,
+        templateId: row.workout_template,
+        startedAt: row.started_at,
+        completedAt: row.completed_at,
+        durationSeconds: row.duration_seconds,
+        exercises: row.exercises ?? [],
+        synced: true,
+      }));
+      useWorkoutStore.setState((s) => ({ history: [...s.history, ...pulled] }));
+    }
+
+    if (runsRes.data && runsRes.data.length > 0) {
+      const pulled: CompletedRun[] = runsRes.data.map((row: any) => ({
+        id: row.id,
+        templateId: row.template_id,
+        sessionType: row.session_type,
+        startedAt: row.started_at,
+        completedAt: row.completed_at,
+        durationSeconds: row.duration_seconds,
+        distanceMeters: row.distance_meters ?? undefined,
+        avgHr: row.avg_hr ?? undefined,
+        synced: true,
+      }));
+      useRunStore.setState((s) => ({ history: [...s.history, ...pulled] }));
+    }
+
+    if (checkinsRes.data && checkinsRes.data.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const pulledHistory: NutritionCheckin[] = checkinsRes.data
+        .filter((row: any) => row.date !== today)
+        .map((row: any) => ({
+          date: row.date,
+          proteinServings: row.protein_servings,
+          veggieServings: row.veggie_servings,
+          waterGlasses: row.water_glasses,
+          followedPlan: row.followed_plan,
+        }));
+      if (pulledHistory.length > 0) {
+        useNutritionStore.setState((s) => ({
+          history: [...s.history, ...pulledHistory],
+        }));
+      }
+    }
+
+    if (plansRes.data) {
+      const row = plansRes.data as any;
+      usePlanStore.getState().setPlan(row.plan_data ?? {});
+    }
+
+    if (profileRes.data) {
+      const row = profileRes.data as any;
+      useUserStore.getState().setProfile({
+        age: row.age ?? undefined,
+        weightKg: row.weight_kg ?? undefined,
+        heightCm: row.height_cm ?? undefined,
+        sex: row.sex ?? undefined,
+      });
+    }
+
+    console.log('Sync: pull from cloud complete');
+  } catch (e) {
+    console.log('Sync: pullFromCloud error', e);
+  }
+}
+
+// ── Debounced nutrition helper ────────────────────────────────────────────────
+
+let _nutritionTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function debouncedSyncNutrition(): void {
+  if (_nutritionTimer) clearTimeout(_nutritionTimer);
+  _nutritionTimer = setTimeout(() => {
+    void syncNutritionCheckin(useNutritionStore.getState().todayCheckin);
+  }, 5000);
+}

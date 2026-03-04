@@ -53,37 +53,49 @@ export const useNutritionStore = create<NutritionState>()(
 
       resetToday: () => set({ todayCheckin: emptyCheckin() }),
 
-      logProteinPortion: () =>
+      logProteinPortion: () => {
         set((state) => ({
           todayCheckin: {
             ...state.todayCheckin,
             proteinServings: state.todayCheckin.proteinServings + 1,
           },
-        })),
+        }));
+        const { debouncedSyncNutrition } = require('@/services/sync');
+        debouncedSyncNutrition();
+      },
 
-      logVeggiePortion: () =>
+      logVeggiePortion: () => {
         set((state) => ({
           todayCheckin: {
             ...state.todayCheckin,
             veggieServings: state.todayCheckin.veggieServings + 1,
           },
-        })),
+        }));
+        const { debouncedSyncNutrition } = require('@/services/sync');
+        debouncedSyncNutrition();
+      },
 
-      logWater: () =>
+      logWater: () => {
         set((state) => ({
           todayCheckin: {
             ...state.todayCheckin,
             waterGlasses: state.todayCheckin.waterGlasses + 1,
           },
-        })),
+        }));
+        const { debouncedSyncNutrition } = require('@/services/sync');
+        debouncedSyncNutrition();
+      },
 
-      setFollowedPlan: (followed) =>
+      setFollowedPlan: (followed) => {
         set((state) => ({
           todayCheckin: {
             ...state.todayCheckin,
             followedPlan: followed,
           },
-        })),
+        }));
+        const { debouncedSyncNutrition } = require('@/services/sync');
+        debouncedSyncNutrition();
+      },
     }),
     {
       name: 'nutrition-store',

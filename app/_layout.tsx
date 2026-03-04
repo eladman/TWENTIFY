@@ -1,10 +1,15 @@
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { setupNotificationHandler, rescheduleReminders } from '@/services/notifications';
+import { getCurrentUser } from '@/services/auth';
 import { useUserStore } from '@/stores/useUserStore';
+import { useWorkoutStore } from '@/stores/useWorkoutStore';
+import { useRunStore } from '@/stores/useRunStore';
+import { syncAllPending, syncUserProfile, pullFromCloud, ensureUserRecord } from '@/services/sync';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   DMSans_400Regular,
@@ -33,6 +38,32 @@ export default function RootLayout() {
     if (onboardingCompleted && settings.notifications) {
       rescheduleReminders();
     }
+  }, []);
+
+  // Restore auth session on mount, then sync or pull from cloud
+  useEffect(() => {
+    getCurrentUser().then(async (user) => {
+      if (user) {
+        useUserStore.getState().setAuth(user.id, user.email ?? null);
+        await ensureUserRecord();
+        const workouts = useWorkoutStore.getState().history;
+        const runs = useRunStore.getState().history;
+        if (workouts.length === 0 && runs.length === 0) {
+          void pullFromCloud();
+        } else {
+          void syncAllPending();
+          void syncUserProfile();
+        }
+      }
+    });
+  }, []);
+
+  // Re-sync pending items whenever the app comes back to the foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void syncAllPending();
+    });
+    return () => sub.remove();
   }, []);
 
   // Navigate to Today when user taps a notification

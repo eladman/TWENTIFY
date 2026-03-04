@@ -18,6 +18,8 @@ interface UserState {
   profile: UserProfile | null;
   settings: UserSettings;
   subscriptionTier: SubscriptionTier;
+  authUserId: string | null;
+  authEmail: string | null;
 
   setDomains: (domains: Domain[]) => void;
   setGoal: (goal: Goal) => void;
@@ -26,6 +28,8 @@ interface UserState {
   completeOnboarding: () => void;
   updateSettings: (settings: Partial<UserSettings>) => void;
   setSubscriptionTier: (tier: SubscriptionTier) => void;
+  setAuth: (userId: string, email: string | null) => void;
+  clearAuth: () => void;
   reset: () => void;
 }
 
@@ -41,6 +45,8 @@ const initialState = {
     reminderTime: '07:00',
   },
   subscriptionTier: 'free' as SubscriptionTier,
+  authUserId: null as string | null,
+  authEmail: null as string | null,
 };
 
 export const useUserStore = create<UserState>()(
@@ -56,6 +62,8 @@ export const useUserStore = create<UserState>()(
       updateSettings: (updates) =>
         set((state) => ({ settings: { ...state.settings, ...updates } })),
       setSubscriptionTier: (tier) => set({ subscriptionTier: tier }),
+      setAuth: (userId, email) => set({ authUserId: userId, authEmail: email }),
+      clearAuth: () => set({ authUserId: null, authEmail: null }),
       reset: () => set(initialState),
     }),
     {

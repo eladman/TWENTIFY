@@ -33,6 +33,7 @@ export interface CompletedRun {
   durationSeconds: number;
   distanceMeters?: number;
   avgHr?: number;
+  synced?: boolean; // undefined = legacy (treat as unsynced), false = pending, true = done
 }
 
 // ── Segment-based run types ───────────────────────────────────────────

@@ -77,4 +77,5 @@ export interface CompletedWorkout {
     exerciseId: string;
     sets: SetData[];
   }[];
+  synced?: boolean; // undefined = legacy (treat as unsynced), false = pending, true = done
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandStorage } from './storage';
+import { generateUUID } from '@/utils/uuid';
 import type {
   ActiveWorkout,
   CompletedWorkout,
@@ -19,6 +20,8 @@ interface WorkoutState {
   finishWorkout: () => void;
   abandonWorkout: () => void;
   getLastSessionForExercise: (exerciseId: string) => SetData[] | null;
+  markWorkoutSynced: (id: string) => void;
+  updateWorkoutId: (oldId: string, newId: string) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -88,30 +91,39 @@ export const useWorkoutStore = create<WorkoutState>()(
           return state;
         }),
 
-      finishWorkout: () =>
-        set((state) => {
-          if (!state.activeSession) return state;
-          const completed: CompletedWorkout = {
-            id: Date.now().toString(),
-            templateId: state.activeSession.templateId,
-            startedAt: state.activeSession.startedAt,
-            completedAt: new Date().toISOString(),
-            durationSeconds: Math.floor(
-              (Date.now() - new Date(state.activeSession.startedAt).getTime()) /
-                1000
-            ),
-            exercises: state.activeSession.exercises.map((ex) => ({
-              exerciseId: ex.exerciseId,
-              sets: ex.sets.filter((s): s is SetData => s !== null),
-            })),
-          };
-          return {
-            activeSession: null,
-            history: [...state.history, completed],
-          };
-        }),
+      finishWorkout: () => {
+        const state = get();
+        if (!state.activeSession) return;
+        const completed: CompletedWorkout = {
+          id: generateUUID(),
+          templateId: state.activeSession.templateId,
+          startedAt: state.activeSession.startedAt,
+          completedAt: new Date().toISOString(),
+          durationSeconds: Math.floor(
+            (Date.now() - new Date(state.activeSession.startedAt).getTime()) / 1000,
+          ),
+          exercises: state.activeSession.exercises.map((ex) => ({
+            exerciseId: ex.exerciseId,
+            sets: ex.sets.filter((s): s is SetData => s !== null),
+          })),
+          synced: false,
+        };
+        set({ activeSession: null, history: [...state.history, completed] });
+        const { syncWorkoutSession } = require('@/services/sync');
+        void syncWorkoutSession(completed);
+      },
 
       abandonWorkout: () => set({ activeSession: null }),
+
+      markWorkoutSynced: (id) =>
+        set((state) => ({
+          history: state.history.map((w) => (w.id === id ? { ...w, synced: true } : w)),
+        })),
+
+      updateWorkoutId: (oldId, newId) =>
+        set((state) => ({
+          history: state.history.map((w) => (w.id === oldId ? { ...w, id: newId } : w)),
+        })),
 
       getLastSessionForExercise: (exerciseId) => {
         const { history } = get();

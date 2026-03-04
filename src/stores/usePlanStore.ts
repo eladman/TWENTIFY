@@ -43,13 +43,16 @@ export const usePlanStore = create<PlanState>()(
       setGymPlan: (plan) => set({ gymPlan: plan }),
       setRunPlan: (plan) => set({ runPlan: plan }),
       setNutritionPlan: (plan) => set({ nutritionPlan: plan }),
-      setPlan: (plan) =>
+      setPlan: (plan) => {
         set({
           weeklySchedule: plan.weeklySchedule,
           gymPlan: plan.gymPlan ?? null,
           runPlan: plan.runPlan ?? null,
           nutritionPlan: plan.nutritionPlan ?? null,
-        }),
+        });
+        const { syncPlan } = require('@/services/sync');
+        void syncPlan();
+      },
       advanceWeek: () => set((state) => ({ currentWeek: state.currentWeek + 1 })),
       clearPlan: () => set(initialState),
       reset: () => set(initialState),
