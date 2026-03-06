@@ -1,6 +1,6 @@
 import { ScrollView, RefreshControl, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, Easing } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
@@ -35,7 +35,7 @@ export default function TodayScreen() {
         </View>
 
         <Animated.View
-          entering={FadeInDown.delay(0).duration(400).springify()}
+          entering={FadeInDown.delay(0).duration(250).easing(Easing.out(Easing.ease))}
           style={styles.cardSpacing}
         >
           <ActivityCard
@@ -48,7 +48,7 @@ export default function TodayScreen() {
 
         {data.hasNutritionDomain && (
           <Animated.View
-            entering={FadeInDown.delay(80).duration(400).springify()}
+            entering={FadeInDown.delay(80).duration(250).easing(Easing.out(Easing.ease))}
             style={styles.cardSpacing}
           >
             <NutritionCard
@@ -61,7 +61,7 @@ export default function TodayScreen() {
 
         {data.state !== 'no_plan' && (
           <Animated.View
-            entering={FadeInDown.delay(160).duration(400).springify()}
+            entering={FadeInDown.delay(160).duration(250).easing(Easing.out(Easing.ease))}
             style={styles.cardSpacing}
           >
             <WeekStrip

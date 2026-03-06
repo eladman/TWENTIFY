@@ -25,6 +25,7 @@ import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { radius } from '@/theme/radius';
 import { haptics } from '@/utils/haptics';
+import { analytics } from '@/services/analytics';
 import {
   getQuestionsForDomains,
   type OnboardingQuestion,
@@ -139,16 +140,52 @@ const selectStyles = StyleSheet.create({
   },
 });
 
+// ── Validation ───────────────────────────────────────────────────────
+
+const BODY_STAT_RANGES: Record<string, { min: number; max: number; label: string }> = {
+  age: { min: 13, max: 99, label: 'Age must be between 13 and 99' },
+  weightKg: { min: 30, max: 300, label: 'Weight must be between 30 and 300 kg' },
+  heightCm: { min: 100, max: 250, label: 'Height must be between 100 and 250 cm' },
+};
+
+function validateBodyStats(values: Record<string, string>): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const [key, range] of Object.entries(BODY_STAT_RANGES)) {
+    const raw = values[key]?.trim();
+    if (!raw) continue;
+    const num = Number(raw);
+    if (isNaN(num) || num < range.min || num > range.max) {
+      errors[key] = range.label;
+    }
+  }
+  return errors;
+}
+
+function filterNumericInput(text: string, allowDecimal: boolean): string {
+  if (allowDecimal) {
+    // Allow digits and at most one decimal point
+    let hasDecimal = false;
+    return text.split('').filter((c) => {
+      if (c >= '0' && c <= '9') return true;
+      if (c === '.' && !hasDecimal) { hasDecimal = true; return true; }
+      return false;
+    }).join('');
+  }
+  return text.replace(/[^0-9]/g, '');
+}
+
 // ── Numeric Form Question ─────────────────────────────────────────────
 
 function NumericFormQuestion({
   question,
   formValues,
   onChangeField,
+  validationErrors,
 }: {
   question: OnboardingQuestion;
   formValues: Record<string, string>;
   onChangeField: (key: string, value: string) => void;
+  validationErrors?: Record<string, string>;
 }) {
   return (
     <View style={formStyles.container}>
@@ -181,16 +218,19 @@ function NumericFormQuestion({
           );
         }
 
+        const error = validationErrors?.[field.key];
+        const isWeight = field.key === 'weightKg';
+
         return (
           <View key={field.key} style={formStyles.fieldGroup}>
             <Text variant="caption" color={colors.textSecondary} style={formStyles.fieldLabel}>
               {field.label.toUpperCase()}
             </Text>
-            <View style={formStyles.inputRow}>
+            <View style={[formStyles.inputRow, error ? formStyles.inputRowError : undefined]}>
               <TextInput
                 style={formStyles.input}
                 value={formValues[field.key] ?? ''}
-                onChangeText={(t) => onChangeField(field.key, t)}
+                onChangeText={(t) => onChangeField(field.key, filterNumericInput(t, isWeight))}
                 placeholder={field.placeholder}
                 placeholderTextColor={colors.textMuted}
                 keyboardType={field.keyboardType as 'numeric' | 'default'}
@@ -203,6 +243,11 @@ function NumericFormQuestion({
                 </Text>
               ) : null}
             </View>
+            {error ? (
+              <Text variant="caption" color={colors.error} style={formStyles.errorText}>
+                {error}
+              </Text>
+            ) : null}
           </View>
         );
       })}
@@ -264,6 +309,12 @@ const formStyles = StyleSheet.create({
     color: colors.textPrimary,
     padding: 0,
   },
+  inputRowError: {
+    borderColor: colors.error,
+  },
+  errorText: {
+    marginTop: 2,
+  },
   sexToggle: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -302,6 +353,7 @@ export default function AssessmentScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const isAnimating = useRef(false);
   const translateX = useSharedValue(0);
 
@@ -312,9 +364,15 @@ export default function AssessmentScreen() {
     if (!question) return false;
     if (question.type === 'single_select') return selectedValue !== null;
     if (question.type === 'numeric_form') {
-      return (question.fields ?? []).every(
+      const allFilled = (question.fields ?? []).every(
         (f) => (formValues[f.key] ?? '').trim().length > 0,
       );
+      if (!allFilled) return false;
+      if (question.id === 'body_stats') {
+        const errors = validateBodyStats(formValues);
+        return Object.keys(errors).length === 0;
+      }
+      return true;
     }
     return false;
   }, [question, selectedValue, formValues]);
@@ -323,7 +381,15 @@ export default function AssessmentScreen() {
   useEffect(() => {
     setSelectedValue(null);
     setFormValues({});
+    setValidationErrors({});
   }, [currentIndex]);
+
+  // Update validation errors on form value changes for body_stats
+  useEffect(() => {
+    if (question?.id === 'body_stats') {
+      setValidationErrors(validateBodyStats(formValues));
+    }
+  }, [formValues, question?.id]);
 
   // ── Store persistence ───────────────────────────────────────────────
 
@@ -381,6 +447,10 @@ export default function AssessmentScreen() {
     persistAnswer(question, answerValue);
 
     if (isLast) {
+      analytics.track('assessment_completed', {
+        goal: useUserStore.getState().goal,
+        fitness_level: useUserStore.getState().fitnessLevel,
+      });
       router.push('/(onboarding)/preview');
       return;
     }
@@ -438,6 +508,7 @@ export default function AssessmentScreen() {
                 onChangeField={(key, value) =>
                   setFormValues((prev) => ({ ...prev, [key]: value }))
                 }
+                validationErrors={question.id === 'body_stats' ? validationErrors : undefined}
               />
             )}
           </ScrollView>

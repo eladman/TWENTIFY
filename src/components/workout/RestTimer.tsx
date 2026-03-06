@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -38,48 +38,67 @@ export function RestTimer({
   onSkip,
   nextSetInfo,
 }: RestTimerProps) {
+  const startTimeRef = useRef(Date.now());
   const [secondsLeft, setSecondsLeft] = useState(totalSeconds);
   const completedRef = useRef(false);
+  const hapticsAt10Ref = useRef(false);
   const progress = useSharedValue(1);
+  const timerScale = useSharedValue(1);
 
-  // Start progress bar animation on mount
+  const computeRemaining = useCallback(() => {
+    const elapsed = (Date.now() - startTimeRef.current) / 1000;
+    return Math.max(0, Math.ceil(totalSeconds - elapsed));
+  }, [totalSeconds]);
+
+  // Wall-clock countdown ticker (500ms for responsiveness)
   useEffect(() => {
-    progress.value = withTiming(0, {
-      duration: totalSeconds * 1000,
-      easing: Easing.linear,
+    const tick = () => {
+      const remaining = computeRemaining();
+      setSecondsLeft(remaining);
+      progress.value = remaining / totalSeconds;
+    };
+
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [computeRemaining, totalSeconds, progress]);
+
+  // AppState listener — immediately update on foreground return
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        const remaining = computeRemaining();
+        setSecondsLeft(remaining);
+        progress.value = remaining / totalSeconds;
+      }
     });
-  }, [totalSeconds, progress]);
-
-  // Countdown interval
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+    return () => sub.remove();
+  }, [computeRemaining, totalSeconds, progress]);
 
   // Haptics and completion
   useEffect(() => {
-    if (secondsLeft === 10) {
+    if (secondsLeft <= 10 && !hapticsAt10Ref.current) {
+      hapticsAt10Ref.current = true;
       haptics.light();
     }
 
     if (secondsLeft === 0 && !completedRef.current) {
       completedRef.current = true;
+      timerScale.value = withSequence(
+        withTiming(1.05, { duration: 150 }),
+        withTiming(1.0, { duration: 150 }),
+      );
       haptics.success();
       setTimeout(onComplete, 300);
     }
-  }, [secondsLeft, onComplete]);
+  }, [secondsLeft, onComplete, timerScale]);
 
   const progressBarStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
+  }));
+
+  const timerPulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: timerScale.value }],
   }));
 
   const handleSkip = useCallback(() => {
@@ -93,9 +112,11 @@ export function RestTimer({
           REST
         </Text>
 
-        <Text variant="data.xl" style={styles.timer}>
-          {formatTime(secondsLeft)}
-        </Text>
+        <Animated.View style={timerPulseStyle}>
+          <Text variant="data.xl" style={styles.timer}>
+            {formatTime(secondsLeft)}
+          </Text>
+        </Animated.View>
 
         <View style={styles.progressTrack}>
           <Animated.View style={[styles.progressFill, progressBarStyle]} />

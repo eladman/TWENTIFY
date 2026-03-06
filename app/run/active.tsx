@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { View, Alert, StyleSheet } from 'react-native';
+import { View, Alert, AppState, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -15,6 +15,7 @@ import { getRunSessionForDay, toRunTemplate } from '@/data/runTemplates';
 import { calculateZone2HR } from '@/utils/calculations';
 import { formatDistance } from '@/utils/formatters';
 import { haptics } from '@/utils/haptics';
+import { analytics } from '@/services/analytics';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
 import type { RunSessionType, RunSegment, RunSegmentType } from '@/types/run';
@@ -108,6 +109,7 @@ export default function ActiveRunScreen() {
   const [segmentTimeRemaining, setSegmentTimeRemaining] = useState(0);
   const [targetDurationMin, setTargetDurationMin] = useState(0);
   const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
 
   const isPaused = activeSession?.isPaused ?? false;
 
@@ -126,6 +128,11 @@ export default function ActiveRunScreen() {
     setTargetDurationMin(session.totalDurationMinutes);
 
     startRun(template);
+    analytics.track('run_started', {
+      session_type: sessionType,
+      is_walk_run: sessionType === 'walk_run',
+      week_number: weekNumber,
+    });
     const now = new Date();
     startedAtRef.current = now;
 
@@ -152,7 +159,11 @@ export default function ActiveRunScreen() {
 
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted' || cancelled) return;
+      if (status !== 'granted') {
+        if (!cancelled) setLocationDenied(true);
+        return;
+      }
+      if (cancelled) return;
 
       const sub = await Location.watchPositionAsync(
         {
@@ -302,6 +313,19 @@ export default function ActiveRunScreen() {
     return () => clearInterval(id);
   }, [ready, isPaused, updateElapsed]);
 
+  // ── AppState: force-update elapsed on foreground return ─────────
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && startedAtRef.current && !isPaused) {
+        const elapsed = Math.floor(
+          (Date.now() - startedAtRef.current.getTime() - elapsedPausedMsRef.current) / 1000,
+        );
+        updateElapsed(elapsed);
+      }
+    });
+    return () => sub.remove();
+  }, [isPaused, updateElapsed]);
+
   // ── Derived values ──────────────────────────────────────────────
   const currentSegment = isSegmented ? segmentsRef.current[currentSegmentIndex] : null;
   const currentZone: TargetZone = currentSegment
@@ -351,6 +375,10 @@ export default function ActiveRunScreen() {
         text: 'End Run',
         style: 'destructive',
         onPress: () => {
+          analytics.track('run_abandoned', {
+            duration_seconds: activeSession?.elapsedSeconds ?? 0,
+            session_type: sessionType,
+          });
           locationSubRef.current?.remove();
           abandonRun();
           router.back();
@@ -360,6 +388,13 @@ export default function ActiveRunScreen() {
   };
 
   const handleFinish = () => {
+    analytics.track('run_completed', {
+      duration_seconds: activeSession?.elapsedSeconds ?? 0,
+      distance_meters: cumulativeDistRef.current,
+      session_type: sessionType,
+      segments_completed: currentSegmentIndex + 1,
+    });
+    haptics.success();
     locationSubRef.current?.remove();
     finishRun(sessionType);
     router.replace('/run/summary');
@@ -449,8 +484,17 @@ export default function ActiveRunScreen() {
             </>
           )}
 
-          {/* Distance (if GPS available) */}
-          {distanceMeters != null && (
+          {/* Distance */}
+          {locationDenied ? (
+            <Text
+              variant="body.md"
+              color={colors.textMuted}
+              align="center"
+              style={styles.distanceText}
+            >
+              Distance: —
+            </Text>
+          ) : distanceMeters != null ? (
             <Text
               variant="body.md"
               color={colors.textSecondary}
@@ -459,7 +503,7 @@ export default function ActiveRunScreen() {
             >
               {formatDistance(distanceMeters, units)}
             </Text>
-          )}
+          ) : null}
         </View>
 
         {/* Bottom controls */}

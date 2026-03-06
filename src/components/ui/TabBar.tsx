@@ -13,6 +13,7 @@ import Animated, {
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { colors } from '@/theme/colors';
 import { fontFamilies } from '@/theme/typography';
+import { analytics } from '@/services/analytics';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
@@ -136,6 +137,7 @@ function TabItem({
 
     if (!isFocused && !event.defaultPrevented) {
       navigation.navigate(route.name, { merge: true });
+      analytics.track('tab_switched', { tab_name: route.name });
     }
   };
 

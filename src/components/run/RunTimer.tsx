@@ -66,8 +66,8 @@ export function RunTimer({ startedAt, paused }: RunTimerProps) {
     if (paused) {
       opacity.value = withRepeat(
         withSequence(
-          withTiming(0.4, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1.0, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.4, { duration: 750, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 750, easing: Easing.inOut(Easing.ease) }),
         ),
         -1,
         false,

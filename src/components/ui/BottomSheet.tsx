@@ -12,6 +12,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSpring,
   Easing,
   interpolate,
   runOnJS,
@@ -52,10 +53,7 @@ export function BottomSheet({
 
   useEffect(() => {
     if (visible) {
-      translateY.value = withTiming(0, {
-        duration: 350,
-        easing: Easing.out(Easing.cubic),
-      });
+      translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
     } else {
       translateY.value = withTiming(sheetHeight, { duration: 250 });
     }

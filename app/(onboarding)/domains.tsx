@@ -16,6 +16,7 @@ import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { useUserStore } from '@/stores/useUserStore';
 import { haptics } from '@/utils/haptics';
+import { analytics } from '@/services/analytics';
 import type { Domain } from '@/types/user';
 
 const DOMAINS = [
@@ -177,6 +178,10 @@ export default function DomainsScreen() {
   const setDomains = useUserStore((s) => s.setDomains);
   const [selected, setSelected] = useState<Domain[]>([]);
 
+  useEffect(() => {
+    analytics.track('onboarding_started');
+  }, []);
+
   const toggle = (id: Domain) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
@@ -184,6 +189,7 @@ export default function DomainsScreen() {
   };
 
   const handleContinue = () => {
+    analytics.track('domains_selected', { domains: selected });
     setDomains(selected);
     router.push('/(onboarding)/assessment');
   };

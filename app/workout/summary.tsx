@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   withDelay,
   Easing,
+  FadeIn,
 } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
@@ -68,7 +69,7 @@ function useFadeIn(delay: number) {
   const scale = useSharedValue(0.95);
 
   useEffect(() => {
-    const config = { duration: 300, easing: Easing.out(Easing.ease) };
+    const config = { duration: 350, easing: Easing.out(Easing.ease) };
     opacity.value = withDelay(delay, withTiming(1, config));
     scale.value = withDelay(delay, withTiming(1, config));
   }, []);
@@ -105,7 +106,7 @@ export default function WorkoutSummaryScreen() {
 
   const headingAnim = useFadeIn(0);
   const gridAnim = useFadeIn(100);
-  const bottomAnim = useFadeIn(200);
+  const bottomAnim = useFadeIn(500);
 
   const handleDone = () => {
     router.dismissAll();
@@ -247,8 +248,8 @@ export default function WorkoutSummaryScreen() {
             <Text variant="heading.sm" style={styles.progressHeading}>
               Progress
             </Text>
-            {progressItems.map((item) => (
-              <View key={item.name} style={styles.progressRow}>
+            {progressItems.map((item, index) => (
+              <Animated.View key={item.name} entering={FadeIn.delay(200 + index * 100).duration(250)} style={styles.progressRow}>
                 {item.increased ? (
                   <Text variant="body.md">
                     <Text variant="body.md" color={colors.success}>
@@ -266,7 +267,7 @@ export default function WorkoutSummaryScreen() {
                     {item.name} — {formatWeight(item.currentWeightKg, units)}
                   </Text>
                 )}
-              </View>
+              </Animated.View>
             ))}
           </Animated.View>
         )}

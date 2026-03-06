@@ -5,6 +5,7 @@ import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { useRunStore } from '@/stores/useRunStore';
 import { useNutritionStore } from '@/stores/useNutritionStore';
 import { useUserStore } from '@/stores/useUserStore';
+import { analytics } from '@/services/analytics';
 import type { DayPlan, DayActivity } from '@/types/plan';
 import type { CompletedWorkout } from '@/types/workout';
 import type { CompletedRun } from '@/types/run';
@@ -130,8 +131,12 @@ export function useToday(): TodayData {
   const proteinTarget = nutritionPlan?.proteinPortions ?? 4;
 
   const onLogProtein = useCallback(() => {
+    analytics.track('nutrition_logged', {
+      type: 'protein',
+      daily_count: todayCheckin.proteinServings + 1,
+    });
     logProteinPortion();
-  }, [logProteinPortion]);
+  }, [logProteinPortion, todayCheckin.proteinServings]);
 
   // Day selection
   const onSelectDay = useCallback((dayIndex: number) => {

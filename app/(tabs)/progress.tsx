@@ -1,6 +1,6 @@
 import { ScrollView, RefreshControl, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, Easing } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { ConsistencyGrid } from '@/components/progress/ConsistencyGrid';
@@ -41,7 +41,7 @@ export default function ProgressScreen() {
         <Text variant="heading.xl">Progress</Text>
 
         <Animated.View
-          entering={FadeInDown.delay(0).duration(400).springify()}
+          entering={FadeInDown.delay(0).duration(250).easing(Easing.out(Easing.ease))}
           style={styles.section}
         >
           <ConsistencyGrid />
@@ -49,7 +49,7 @@ export default function ProgressScreen() {
 
         {hasGymDomain && (
           <Animated.View
-            entering={FadeInDown.delay(80).duration(400).springify()}
+            entering={FadeInDown.delay(80).duration(250).easing(Easing.out(Easing.ease))}
             style={styles.section}
           >
             <Text variant="heading.md" style={styles.sectionHeading}>
@@ -82,7 +82,7 @@ export default function ProgressScreen() {
 
         {hasRunningDomain && (
           <Animated.View
-            entering={FadeInDown.delay(runningDelay).duration(400).springify()}
+            entering={FadeInDown.delay(runningDelay).duration(250).easing(Easing.out(Easing.ease))}
             style={styles.section}
           >
             {hasRunHistory ? (

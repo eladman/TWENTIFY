@@ -6,6 +6,7 @@ import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { setupNotificationHandler, rescheduleReminders } from '@/services/notifications';
 import { getCurrentUser } from '@/services/auth';
+import { initAnalytics, analytics } from '@/services/analytics';
 import { useUserStore } from '@/stores/useUserStore';
 import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { useRunStore } from '@/stores/useRunStore';
@@ -31,6 +32,11 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const router = useRouter();
 
+  // Analytics init (fire-and-forget)
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+
   // Notification setup on mount
   useEffect(() => {
     setupNotificationHandler();
@@ -45,6 +51,7 @@ export default function RootLayout() {
     getCurrentUser().then(async (user) => {
       if (user) {
         useUserStore.getState().setAuth(user.id, user.email ?? null);
+        analytics.identify(user.id, { email: user.email });
         await ensureUserRecord();
         const workouts = useWorkoutStore.getState().history;
         const runs = useRunStore.getState().history;
@@ -108,19 +115,19 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="workout/[id]"
-          options={{ presentation: 'modal', gestureEnabled: false }}
+          options={{ presentation: 'modal', gestureEnabled: false, animation: 'slide_from_bottom', animationDuration: 350 }}
         />
         <Stack.Screen
           name="workout/summary"
-          options={{ presentation: 'modal' }}
+          options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 350 }}
         />
         <Stack.Screen
           name="run/active"
-          options={{ presentation: 'modal', gestureEnabled: false }}
+          options={{ presentation: 'modal', gestureEnabled: false, animation: 'slide_from_bottom', animationDuration: 350 }}
         />
         <Stack.Screen
           name="run/summary"
-          options={{ presentation: 'modal' }}
+          options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 350 }}
         />
         <Stack.Screen
           name="exercise/[id]"
@@ -128,7 +135,7 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="paywall"
-          options={{ presentation: 'modal' }}
+          options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 350 }}
         />
       </Stack>
       <ToastRoot />

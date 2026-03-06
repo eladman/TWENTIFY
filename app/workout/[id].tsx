@@ -11,6 +11,7 @@ import { ExerciseTransition } from '@/components/workout/ExerciseTransition';
 import { SetCompletionFlash } from '@/components/workout/SetCompletionFlash';
 import { RestTimer } from '@/components/workout/RestTimer';
 import { useActiveWorkout } from '@/hooks/useActiveWorkout';
+import { haptics } from '@/utils/haptics';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
 
@@ -26,6 +27,13 @@ export default function ActiveWorkoutScreen() {
       w.handleFinish();
     }
   }, [w.phase, w.handleFinish]);
+
+  // Haptic feedback on error state
+  useEffect(() => {
+    if (w.phase === 'error') {
+      haptics.error();
+    }
+  }, [w.phase]);
 
   if (w.phase === 'error') {
     return (

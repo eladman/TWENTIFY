@@ -12,3 +12,4 @@ export { fontFamilies, typeScale, fontsToLoad } from './typography';
 export { spacing, screenPadding } from './spacing';
 export { radius } from './radius';
 export { shadows } from './shadows';
+export { motion } from './animations';

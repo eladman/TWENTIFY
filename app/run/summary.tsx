@@ -112,10 +112,10 @@ function getContextualMessage(
 
 function useFadeIn(delay: number) {
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
+  const translateY = useSharedValue(12);
 
   useEffect(() => {
-    const config = { duration: 400, easing: Easing.out(Easing.ease) };
+    const config = { duration: 350, easing: Easing.out(Easing.ease) };
     opacity.value = withDelay(delay, withTiming(1, config));
     translateY.value = withDelay(delay, withTiming(0, config));
   }, []);

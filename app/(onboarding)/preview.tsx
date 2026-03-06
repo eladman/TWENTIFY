@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/Card';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { haptics } from '@/utils/haptics';
+import { analytics } from '@/services/analytics';
 import { useUserStore } from '@/stores/useUserStore';
 import { usePlanStore } from '@/stores/usePlanStore';
 import { requestNotificationPermission, rescheduleReminders } from '@/services/notifications';
@@ -257,6 +258,15 @@ export default function PreviewScreen() {
     return generatePlan(input);
   }, [domains, goal, fitnessLevel, profile]);
 
+  // Track plan generation
+  useEffect(() => {
+    analytics.track('plan_generated', {
+      plan_type: plan.gymPlan?.type ?? plan.runPlan?.type,
+      domains,
+      total_citations: plan.totalCitations,
+    });
+  }, []);
+
   // Entrance animation
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(20);
@@ -273,6 +283,7 @@ export default function PreviewScreen() {
 
   // Handle "Start My Plan"
   const handleStartPlan = async () => {
+    analytics.track('onboarding_completed');
     haptics.success();
     setPlan({
       weeklySchedule: plan.weeklySchedule,

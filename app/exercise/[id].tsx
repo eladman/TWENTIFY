@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +7,7 @@ import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
 import { exercises, getAlternatives } from '@/data/exercises';
 import { getCitationsForExercise } from '@/data/citations';
+import { analytics } from '@/services/analytics';
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,6 +32,13 @@ export default function ExerciseDetailScreen() {
 
   const citations = getCitationsForExercise(exercise.id);
   const alternatives = getAlternatives(exercise.id);
+
+  useEffect(() => {
+    analytics.track('exercise_detail_opened', { exercise_id: id });
+    citations.forEach((cit) => {
+      analytics.track('citation_viewed', { citation_id: cit.id, from_screen: 'exercise_detail' });
+    });
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>

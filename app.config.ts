@@ -24,9 +24,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#F5F5F7',
+      backgroundColor: '#0071E3',
     },
     package: 'com.twentify.app',
+  },
+  web: {
+    favicon: './assets/favicon.png',
   },
   plugins: [
     'expo-router',
@@ -54,5 +57,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
     REVENUECAT_IOS_KEY: process.env.REVENUECAT_IOS_KEY,
     REVENUECAT_ANDROID_KEY: process.env.REVENUECAT_ANDROID_KEY,
+    POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
   },
 });

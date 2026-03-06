@@ -21,7 +21,7 @@ export function ExerciseTransition({ exerciseKey, children }: ExerciseTransition
       opacity.value = 0;
       opacity.value = withTiming(1, {
         duration: 300,
-        easing: Easing.inOut(Easing.ease),
+        easing: Easing.out(Easing.ease),
       });
     }
   }, [exerciseKey, opacity]);

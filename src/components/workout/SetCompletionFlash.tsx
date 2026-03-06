@@ -22,12 +22,12 @@ export function SetCompletionFlash({ visible }: SetCompletionFlashProps) {
   useEffect(() => {
     if (visible) {
       opacity.value = withSequence(
-        withTiming(1, { duration: 150 }),
-        withDelay(200, withTiming(0, { duration: 300 })),
+        withTiming(0.2, { duration: 150 }),
+        withTiming(0, { duration: 150 }),
       );
       scale.value = withSequence(
         withTiming(1, { duration: 150 }),
-        withDelay(200, withTiming(0.5, { duration: 300 })),
+        withTiming(0.5, { duration: 150 }),
       );
     }
   }, [visible, opacity, scale]);

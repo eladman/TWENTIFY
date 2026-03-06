@@ -1,4 +1,5 @@
 import { Pressable, View, StyleSheet } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Card } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme/colors';
@@ -29,12 +30,15 @@ export function WeekStrip({ weekDays, completedCount, totalScheduled, onSelectDa
       <Text variant="heading.sm">This Week</Text>
 
       <View style={styles.stripRow}>
-        {weekDays.map((day) => {
+        {weekDays.map((day, index) => {
           const emoji = getActivityEmoji(day);
 
           return (
-            <Pressable
+            <Animated.View
               key={day.dayIndex}
+              entering={FadeIn.delay(index * 40).duration(250)}
+            >
+            <Pressable
               onPress={() => {
                 haptics.selection();
                 onSelectDay(day.dayIndex);
@@ -69,6 +73,7 @@ export function WeekStrip({ weekDays, completedCount, totalScheduled, onSelectDa
                 <View style={styles.todayIndicator} />
               )}
             </Pressable>
+            </Animated.View>
           );
         })}
       </View>

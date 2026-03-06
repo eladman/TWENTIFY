@@ -9,6 +9,7 @@ export default function OnboardingLayout() {
         gestureEnabled: false,
         contentStyle: { backgroundColor: colors.background },
         animation: 'slide_from_right',
+        animationDuration: 300,
       }}
     />
   );

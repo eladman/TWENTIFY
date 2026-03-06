@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { Card } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
 import { Badge } from '@/components/ui/Badge';
@@ -44,6 +50,12 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
         <Text variant="body.md" color={colors.textSecondary} style={styles.subtitle}>
           Complete the onboarding to get your personalized training plan.
         </Text>
+        <Button
+          label="Start Setup →"
+          onPress={() => router.push('/(onboarding)/domains')}
+          fullWidth
+          style={styles.startButton}
+        />
       </Card>
     );
   }
@@ -70,6 +82,9 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
             </Text>
           )}
         </View>
+        <Text variant="body.sm" color={colors.textMuted} style={styles.encouragement}>
+          Rest up — see you tomorrow.
+        </Text>
       </Card>
     );
   }
@@ -132,12 +147,14 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
           )}
         </View>
 
-        <Button
-          label="Start Workout →"
-          onPress={handleStart}
-          fullWidth
-          style={styles.startButton}
-        />
+        <StartButtonPulse>
+          <Button
+            label="Start Workout →"
+            onPress={handleStart}
+            fullWidth
+            style={styles.startButton}
+          />
+        </StartButtonPulse>
 
         <ExerciseDetailSheet
           exerciseId={selectedExerciseId}
@@ -177,12 +194,14 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
           {template.targetZone ? ` · ${template.targetZone}` : ''}
         </Text>
 
-        <Button
-          label="Start Run →"
-          onPress={handleStart}
-          fullWidth
-          style={styles.startButton}
-        />
+        <StartButtonPulse>
+          <Button
+            label="Start Run →"
+            onPress={handleStart}
+            fullWidth
+            style={styles.startButton}
+          />
+        </StartButtonPulse>
       </Card>
     );
   }
@@ -207,6 +226,26 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
   }
 
   return null;
+}
+
+function StartButtonPulse({ children }: { children: React.ReactNode }) {
+  const scale = useSharedValue(1);
+  const hasRun = useRef(false);
+
+  useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+    scale.value = withSequence(
+      withTiming(1.02, { duration: 1000 }),
+      withTiming(1.0, { duration: 1000 }),
+    );
+  }, [scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 }
 
 const styles = StyleSheet.create({
@@ -246,6 +285,9 @@ const styles = StyleSheet.create({
   },
   startButton: {
     marginTop: spacing.xl,
+  },
+  encouragement: {
+    marginTop: spacing.md,
   },
   quoteText: {
     marginTop: spacing.lg,

@@ -19,6 +19,7 @@ import {
 } from '@/services/notifications';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
+import { analytics } from '@/services/analytics';
 
 // ── Display name mappings ──
 
@@ -213,9 +214,11 @@ export default function ProfileScreen() {
               <SegmentedControl
                 options={['Metric', 'Imperial']}
                 selectedIndex={settings.units === 'metric' ? 0 : 1}
-                onChange={(index) =>
-                  updateSettings({ units: index === 0 ? 'metric' : 'imperial' })
-                }
+                onChange={(index) => {
+                  const newValue = index === 0 ? 'metric' : 'imperial';
+                  analytics.track('units_changed', { from: settings.units, to: newValue });
+                  updateSettings({ units: newValue });
+                }}
               />
             }
           />
@@ -225,9 +228,13 @@ export default function ProfileScreen() {
               <Switch
                 value={settings.notifications}
                 onValueChange={async (val) => {
+                  analytics.track('notifications_toggled', { enabled: val });
                   if (val) {
                     const granted = await requestNotificationPermission();
-                    if (!granted) return;
+                    if (!granted) {
+                      toast.show('Enable notifications in your device Settings to get workout reminders.');
+                      return;
+                    }
                     updateSettings({ notifications: true });
                     rescheduleReminders();
                   } else {

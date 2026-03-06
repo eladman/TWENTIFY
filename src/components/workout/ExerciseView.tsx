@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -62,6 +62,36 @@ function StepperButton({ label, onPress }: { label: string; onPress: () => void 
           {label}
         </Text>
       </Pressable>
+    </Animated.View>
+  );
+}
+
+function AnimatedCounter({ value }: { value: number }) {
+  const translateY = useSharedValue(0);
+  const opacity = useSharedValue(1);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (value !== prevValue.current) {
+      const direction = value > prevValue.current ? -1 : 1;
+      translateY.value = 8 * -direction;
+      opacity.value = 0;
+      translateY.value = withTiming(0, { duration: 150 });
+      opacity.value = withTiming(1, { duration: 150 });
+      prevValue.current = value;
+    }
+  }, [value, translateY, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Text variant="data.lg" align="center">
+        {value}
+      </Text>
     </Animated.View>
   );
 }
@@ -131,9 +161,7 @@ export function ExerciseView({
           <View style={styles.inputRow}>
             <StepperButton label={'\u2212'} onPress={onDecrementWeight} />
             <View style={styles.valueContainer}>
-              <Text variant="data.lg" align="center">
-                {displayWeight}
-              </Text>
+              <AnimatedCounter value={displayWeight} />
               <Text variant="body.sm" color={colors.textSecondary} align="center">
                 {unitLabel}
               </Text>
@@ -148,9 +176,7 @@ export function ExerciseView({
             <Text variant="body.sm" color={colors.textSecondary} align="center">
               Reps completed
             </Text>
-            <Text variant="data.lg" align="center">
-              {displayReps}
-            </Text>
+            <AnimatedCounter value={displayReps} />
           </View>
           <StepperButton label="+" onPress={onIncrementReps} />
         </View>

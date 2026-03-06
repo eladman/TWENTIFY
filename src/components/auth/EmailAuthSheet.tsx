@@ -16,6 +16,27 @@ interface EmailAuthSheetProps {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function getAuthErrorMessage(error: any, mode: 'sign_in' | 'sign_up'): string {
+  const msg = (error?.message ?? '').toLowerCase();
+
+  if (msg.includes('network') || msg.includes('fetch') || msg.includes('timeout')) {
+    return 'No internet connection. Try again later.';
+  }
+  if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('invalid email or password')) {
+    return "Couldn't sign in. Check your email and password.";
+  }
+  if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('user already')) {
+    return 'An account with this email already exists. Try signing in.';
+  }
+  if (msg.includes('password') && (msg.includes('weak') || msg.includes('short') || msg.includes('at least'))) {
+    return 'Password must be at least 8 characters.';
+  }
+
+  return mode === 'sign_in'
+    ? "Couldn't sign in. Check your connection and try again."
+    : "Couldn't create account. Check your connection and try again.";
+}
+
 export function EmailAuthSheet({ visible, onDismiss }: EmailAuthSheetProps) {
   const [mode, setMode] = useState<'sign_in' | 'sign_up'>('sign_in');
   const [email, setEmail] = useState('');
@@ -41,7 +62,7 @@ export function EmailAuthSheet({ visible, onDismiss }: EmailAuthSheetProps) {
       setPassword('');
       onDismiss();
     } catch (err: any) {
-      toast.error(err?.message ?? 'Something went wrong');
+      toast.error(getAuthErrorMessage(err, mode));
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { View, ViewStyle, TextStyle, useWindowDimensions } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { getDaysInMonth, getDay, format } from 'date-fns';
 import { Card } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
@@ -178,7 +179,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
       {/* Grid */}
       <View style={gridContainer}>
         {rows.map((row, rowIndex) => (
-          <View key={rowIndex} style={gridRow}>
+          <Animated.View key={rowIndex} entering={FadeIn.delay(rowIndex * 50).duration(250)} style={gridRow}>
             {row.map((cell, colIndex) => (
               <GridCell
                 key={colIndex}
@@ -187,7 +188,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
                 size={cellSize}
               />
             ))}
-          </View>
+          </Animated.View>
         ))}
       </View>
 

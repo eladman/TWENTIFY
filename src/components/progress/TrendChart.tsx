@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
 import Svg, {
   Path,
@@ -8,6 +8,13 @@ import Svg, {
   Stop,
   Text as SvgText,
 } from 'react-native-svg';
+import Animated, {
+  type SharedValue,
+  useSharedValue,
+  useAnimatedProps,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { Card } from '@/components/ui/Card';
 import { Text } from '@/components/ui/Text';
 import { kgToDisplayWeight, getUnitLabel } from '@/utils/formatters';
@@ -15,6 +22,9 @@ import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import type { Units } from '@/types/user';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface TrendChartProps {
   exerciseId: string;
@@ -27,6 +37,7 @@ const PAD_LEFT = 36;
 const PAD_RIGHT = 12;
 const PAD_TOP = 12;
 const PAD_BOTTOM = 12;
+const DRAW_DURATION = 800;
 
 export function TrendChart({ exerciseId, title, unit }: TrendChartProps) {
   const [chartWidth, setChartWidth] = useState(0);
@@ -63,6 +74,19 @@ export function TrendChart({ exerciseId, title, unit }: TrendChartProps) {
   const handleLayout = (e: LayoutChangeEvent) => {
     setChartWidth(e.nativeEvent.layout.width);
   };
+
+  // Animation shared values
+  const lineProgress = useSharedValue(0);
+
+  useEffect(() => {
+    if (chartWidth > 0 && displayPoints.length >= 2) {
+      lineProgress.value = 0;
+      lineProgress.value = withTiming(1, {
+        duration: DRAW_DURATION,
+        easing: Easing.out(Easing.ease),
+      });
+    }
+  }, [chartWidth, displayPoints.length, lineProgress]);
 
   // Edge case: 0 data points
   if (displayPoints.length === 0) {
@@ -120,6 +144,14 @@ export function TrendChart({ exerciseId, title, unit }: TrendChartProps) {
   // Closed path for gradient fill
   const fillPath = `${linePath} L${getX(displayPoints.length - 1)},${CHART_HEIGHT - PAD_BOTTOM} L${getX(0)},${CHART_HEIGHT - PAD_BOTTOM} Z`;
 
+  // Estimate total path length for stroke animation
+  let pathLength = 0;
+  for (let i = 1; i < displayPoints.length; i++) {
+    const dx = getX(i) - getX(i - 1);
+    const dy = getY(displayPoints[i]) - getY(displayPoints[i - 1]);
+    pathLength += Math.sqrt(dx * dx + dy * dy);
+  }
+
   // Summary
   const first = displayPoints[0];
   const last = displayPoints[displayPoints.length - 1];
@@ -142,24 +174,22 @@ export function TrendChart({ exerciseId, title, unit }: TrendChartProps) {
             {/* Gradient fill */}
             <Path d={fillPath} fill="url(#areaGrad)" />
 
-            {/* Trend line */}
-            <Path
+            {/* Animated trend line */}
+            <AnimatedLinePath
               d={linePath}
-              stroke={colors.accent}
-              strokeWidth={2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              fill="none"
+              pathLength={pathLength}
+              progress={lineProgress}
             />
 
-            {/* Data point circles */}
+            {/* Animated data point circles */}
             {displayPoints.map((val, i) => (
-              <Circle
+              <AnimatedDataPoint
                 key={i}
                 cx={getX(i)}
                 cy={getY(val)}
-                r={3}
-                fill={colors.accent}
+                index={i}
+                total={displayPoints.length}
+                progress={lineProgress}
               />
             ))}
 
@@ -191,7 +221,7 @@ export function TrendChart({ exerciseId, title, unit }: TrendChartProps) {
       {/* Summary text */}
       {increased ? (
         <Text variant="body.sm" color={colors.success}>
-          ↑ {diff}
+          {'\u2191'} {diff}
           {unitLabel} over {displayPoints.length} sessions
         </Text>
       ) : (
@@ -200,6 +230,68 @@ export function TrendChart({ exerciseId, title, unit }: TrendChartProps) {
         </Text>
       )}
     </Card>
+  );
+}
+
+function AnimatedLinePath({
+  d,
+  pathLength,
+  progress,
+}: {
+  d: string;
+  pathLength: number;
+  progress: SharedValue<number>;
+}) {
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: pathLength * (1 - progress.value),
+  }));
+
+  return (
+    <AnimatedPath
+      d={d}
+      stroke={colors.accent}
+      strokeWidth={2}
+      strokeLinejoin="round"
+      strokeLinecap="round"
+      fill="none"
+      strokeDasharray={pathLength}
+      animatedProps={animatedProps}
+    />
+  );
+}
+
+function AnimatedDataPoint({
+  cx,
+  cy,
+  index,
+  total,
+  progress,
+}: {
+  cx: number;
+  cy: number;
+  index: number;
+  total: number;
+  progress: SharedValue<number>;
+}) {
+  // Each point appears when the line drawing reaches its x-position
+  const threshold = total > 1 ? index / (total - 1) : 0;
+
+  const animatedProps = useAnimatedProps(() => {
+    const scale = progress.value >= threshold
+      ? Math.min(1, (progress.value - threshold) * total)
+      : 0;
+    return {
+      r: 3 * scale,
+    };
+  });
+
+  return (
+    <AnimatedCircle
+      cx={cx}
+      cy={cy}
+      fill={colors.accent}
+      animatedProps={animatedProps}
+    />
   );
 }
 

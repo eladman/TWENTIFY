@@ -1,0 +1,14 @@
+diff --git a/node_modules/expo-modules-core/ios/JSI/EXJSIInstaller.mm b/node_modules/expo-modules-core/ios/JSI/EXJSIInstaller.mm
+index 9323e28..6b227cf 100644
+--- a/node_modules/expo-modules-core/ios/JSI/EXJSIInstaller.mm
++++ b/node_modules/expo-modules-core/ios/JSI/EXJSIInstaller.mm
+@@ -2,6 +2,9 @@
+ 
+ #import <ExpoModulesCore/EXJSIInstaller.h>
+ #import <ExpoModulesCore/EXJavaScriptRuntime.h>
++#if __has_include(<ReactCommon/RCTRuntimeExecutor.h>)
++#import <ReactCommon/RCTRuntimeExecutor.h>
++#endif
+ #import <ExpoModulesCore/ExpoModulesHostObject.h>
+ #import <ExpoModulesCore/BridgelessJSCallInvoker.h>
+ #import <ExpoModulesCore/LazyObject.h>

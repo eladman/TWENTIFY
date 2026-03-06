@@ -3,6 +3,7 @@ import { makeRedirectUri } from 'expo-auth-session';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { useUserStore } from '@/stores/useUserStore';
 import { ensureUserRecord, resetUserEnsured } from './sync';
+import { analytics } from './analytics';
 import type { User } from '@supabase/supabase-js';
 
 function updateStoreFromUser(user: User) {
@@ -50,6 +51,8 @@ export async function signInWithApple(): Promise<User | null> {
   const user = sessionData.session?.user;
   if (user) {
     updateStoreFromUser(user);
+    analytics.track('auth_sign_in', { method: 'apple' });
+    analytics.identify(user.id, { email: user.email });
     await ensureUserRecord();
   }
   return user ?? null;
@@ -69,6 +72,8 @@ export async function signInWithEmail(
   const user = data.session?.user;
   if (user) {
     updateStoreFromUser(user);
+    analytics.track('auth_sign_in', { method: 'email' });
+    analytics.identify(user.id, { email });
     await ensureUserRecord();
   }
   return user ?? null;
@@ -97,6 +102,8 @@ export async function signUpWithEmail(
 
   if (user && session) {
     updateStoreFromUser(user);
+    analytics.track('auth_sign_up', { method: 'email' });
+    analytics.identify(user.id, { email });
     await ensureUserRecord();
   }
   return user ?? null;
@@ -105,9 +112,11 @@ export async function signUpWithEmail(
 export async function signOut(): Promise<void> {
   if (!isSupabaseConfigured() || !supabase) return;
 
+  analytics.track('auth_sign_out');
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 
+  analytics.reset();
   resetUserEnsured();
   useUserStore.getState().clearAuth();
 }

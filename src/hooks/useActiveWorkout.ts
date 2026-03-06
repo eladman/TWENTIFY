@@ -8,6 +8,8 @@ import { useUserStore } from '@/stores/useUserStore';
 import { exercises } from '@/data/exercises';
 import { getTargetsForWorkout, type ExerciseProgression } from '@/services/progressiveOverload';
 import { displayWeightToKg, kgToDisplayWeight, getWeightStep, getUnitLabel } from '@/utils/formatters';
+import { analytics } from '@/services/analytics';
+import { haptics } from '@/utils/haptics';
 import type { WorkoutTemplate, ExerciseEquipment } from '@/types/workout';
 import type { Units } from '@/types/user';
 
@@ -126,6 +128,11 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
     if (!activeSession && !hasStartedRef.current) {
       hasStartedRef.current = true;
       startWorkout(template);
+      analytics.track('workout_started', {
+        template: template.id,
+        exercise_count: template.exercises.length,
+        estimated_minutes: template.estimatedDurationMin ?? null,
+      });
     }
   }, [template, activeSession, startWorkout]);
 
@@ -175,10 +182,12 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
   }, [currentExerciseId, setIndex, getLastSessionForExercise, units, unitLabel]);
 
   // Weight/reps handlers
+  const maxWeight = units === 'metric' ? 500 : 1000;
+
   const handleIncrementWeight = useCallback(() => {
     if (isBodyweight) return;
-    setDisplayWeight((w) => Math.round((w + weightStep) * 10) / 10);
-  }, [weightStep, isBodyweight]);
+    setDisplayWeight((w) => Math.min(maxWeight, Math.round((w + weightStep) * 10) / 10));
+  }, [weightStep, isBodyweight, maxWeight]);
 
   const handleDecrementWeight = useCallback(() => {
     if (isBodyweight) return;
@@ -186,7 +195,7 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
   }, [weightStep, isBodyweight]);
 
   const handleIncrementReps = useCallback(() => {
-    setDisplayReps((r) => r + 1);
+    setDisplayReps((r) => Math.min(999, r + 1));
   }, []);
 
   const handleDecrementReps = useCallback(() => {
@@ -200,6 +209,14 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
       reps: displayReps,
       weightKg,
       completed: true,
+    });
+
+    analytics.track('set_completed', {
+      exercise_id: currentExerciseId,
+      set_number: setIndex + 1,
+      weight_kg: weightKg,
+      reps: displayReps,
+      is_deload: currentSetTarget?.isDeload ?? false,
     });
 
     // Flash animation
@@ -270,18 +287,49 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
           text: 'End Workout',
           style: 'destructive',
           onPress: () => {
+            const session = useWorkoutStore.getState().activeSession;
+            analytics.track('workout_abandoned', {
+              exercise_reached: (session?.currentExerciseIndex ?? exerciseIndex) + 1,
+              sets_completed: session?.exercises.reduce(
+                (sum, ex) => sum + ex.sets.filter((s): s is NonNullable<typeof s> => s != null && s.completed).length,
+                0,
+              ) ?? 0,
+            });
             finishWorkout();
             router.back();
           },
         },
       ],
     );
-  }, [finishWorkout]);
+  }, [finishWorkout, exerciseIndex]);
 
   // Finish (called when phase === 'complete')
   const handleFinish = useCallback(() => {
     if (hasFinishedRef.current) return;
     hasFinishedRef.current = true;
+
+    const session = useWorkoutStore.getState().activeSession;
+    if (session) {
+      const totalSetsCompleted = session.exercises.reduce(
+        (sum, ex) => sum + ex.sets.filter((s): s is NonNullable<typeof s> => s != null && s.completed).length,
+        0,
+      );
+      const totalVolumeKg = session.exercises.reduce(
+        (sum, ex) => sum + ex.sets.reduce((s, set) => s + (set != null && set.completed ? set.weightKg * set.reps : 0), 0),
+        0,
+      );
+      const durationSeconds = session.startedAt
+        ? Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000)
+        : 0;
+      analytics.track('workout_completed', {
+        duration_seconds: durationSeconds,
+        total_volume_kg: totalVolumeKg,
+        exercises_completed: session.exercises.length,
+        total_sets: totalSetsCompleted,
+      });
+    }
+
+    haptics.success();
     finishWorkout();
     setTimeout(() => {
       router.replace('/workout/summary');
