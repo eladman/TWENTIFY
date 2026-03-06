@@ -241,7 +241,7 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
   }, [
     isBodyweight, displayWeight, displayReps, units,
     completeSet, exerciseIndex, setIndex, totalSets,
-    totalExercises, nextSet,
+    totalExercises, nextSet, currentExercise, currentExerciseId,
   ]);
 
   // Rest handlers

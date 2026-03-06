@@ -97,6 +97,8 @@ function getSquareStyle(status: WeekDay['status']) {
       return { backgroundColor: colors.textMuted, opacity: 0.3 };
     case 'rest':
       return { backgroundColor: 'transparent' };
+    default:
+      return { backgroundColor: 'transparent' };
   }
 }
 

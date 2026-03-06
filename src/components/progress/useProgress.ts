@@ -4,6 +4,7 @@ import { usePlanStore } from '@/stores/usePlanStore';
 import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { useRunStore } from '@/stores/useRunStore';
 import { exercises } from '@/data/exercises';
+import { syncAllPending } from '@/services/sync';
 import type { Units } from '@/types/user';
 import type { MovementPattern } from '@/types/workout';
 
@@ -79,9 +80,10 @@ export function useProgress(): ProgressData {
     return result;
   }, [gymPlan]);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 500);
+    try { await syncAllPending(); } catch {}
+    setRefreshing(false);
   }, []);
 
   return {

@@ -6,6 +6,7 @@ import { useRunStore } from '@/stores/useRunStore';
 import { useNutritionStore } from '@/stores/useNutritionStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { analytics } from '@/services/analytics';
+import { syncAllPending } from '@/services/sync';
 import type { DayPlan, DayActivity } from '@/types/plan';
 import type { CompletedWorkout } from '@/types/workout';
 import type { CompletedRun } from '@/types/run';
@@ -202,10 +203,11 @@ export function useToday(): TodayData {
   ).length;
 
   // Pull-to-refresh
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     ensureToday();
-    setTimeout(() => setRefreshing(false), 500);
+    try { await syncAllPending(); } catch {}
+    setRefreshing(false);
   }, [ensureToday]);
 
   return {

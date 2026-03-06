@@ -1,0 +1,27 @@
+App Store Connect — Privacy Disclosure
+
+Data Linked to You:
+  - Contact Info (Email Address) — used for account creation and authentication
+  - Health & Fitness (Workout data) — used to provide personalized workout plans and track progress
+  - Identifiers (User ID) — used for app functionality and analytics
+
+Data Not Linked to You:
+  - Usage Data (Product Interaction) — used for analytics to improve the app
+  - Diagnostics (Crash Data, Performance Data) — used for app stability monitoring
+
+Data Not Collected:
+  - Financial Info
+  - Location (precise)
+  - Browsing History
+  - Contacts
+  - Photos or Videos
+  - Search History
+  - Sensitive Info
+
+Third-Party SDKs:
+  - Supabase (authentication, database) — processes email and user data
+  - Sentry (crash reporting) — processes anonymized crash/performance data
+  - PostHog (analytics) — processes anonymized usage events
+  - RevenueCat (subscriptions) — processes purchase/subscription data
+
+Privacy Policy URL: https://twentify.app/privacy

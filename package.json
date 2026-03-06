@@ -12,6 +12,7 @@
     "prebuild": "expo prebuild",
     "typecheck": "tsc --noEmit",
     "generate-assets": "node scripts/generate-assets.js",
+    "generate-screenshots": "node app-store/generate-screenshots.js",
     "fix-codegen": "node scripts/fix-codegen.js",
     "pod-install": "node scripts/fix-codegen.js && cd ios && RCT_SKIP_CODEGEN=1 pod install",
     "postinstall": "patch-package"

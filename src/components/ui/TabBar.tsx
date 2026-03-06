@@ -136,7 +136,7 @@ function TabItem({
     });
 
     if (!isFocused && !event.defaultPrevented) {
-      navigation.navigate(route.name, { merge: true });
+      navigation.navigate(route.name);
       analytics.track('tab_switched', { tab_name: route.name });
     }
   };

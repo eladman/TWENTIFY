@@ -27,14 +27,9 @@ export async function ensureUserRecord(): Promise<void> {
     const { error } = await supabase!.rpc('ensure_user_record', {
       p_email: authEmail ?? '',
     });
-    if (error) {
-      console.log('Sync: ensureUserRecord failed', error.message);
-      return;
-    }
+    if (error) return;
     _userEnsured = true;
-  } catch (e) {
-    console.log('Sync: ensureUserRecord error', e);
-  }
+  } catch {}
 }
 
 export function resetUserEnsured(): void {
@@ -61,9 +56,7 @@ export async function syncUserProfile(): Promise<void> {
       },
       { onConflict: 'user_id' },
     );
-  } catch (e) {
-    console.log('Sync: user profile failed', e);
-  }
+  } catch {}
 }
 
 // ── Workout sessions ──────────────────────────────────────────────────────────
@@ -89,15 +82,10 @@ export async function syncWorkoutSession(workout: CompletedWorkout): Promise<voi
       },
       { onConflict: 'id' },
     );
-    if (error) {
-      console.log('Sync: workout failed, will retry', syncId, error.message);
-    } else {
-      console.log('Sync: workout synced', syncId);
+    if (!error) {
       useWorkoutStore.getState().markWorkoutSynced(syncId);
     }
-  } catch (e) {
-    console.log('Sync: workout failed, will retry', syncId, e);
-  }
+  } catch {}
 }
 
 // ── Run sessions ──────────────────────────────────────────────────────────────
@@ -125,15 +113,10 @@ export async function syncRunSession(run: CompletedRun): Promise<void> {
       },
       { onConflict: 'id' },
     );
-    if (error) {
-      console.log('Sync: run failed, will retry', syncId, error.message);
-    } else {
-      console.log('Sync: run synced', syncId);
+    if (!error) {
       useRunStore.getState().markRunSynced(syncId);
     }
-  } catch (e) {
-    console.log('Sync: run failed, will retry', syncId, e);
-  }
+  } catch {}
 }
 
 // ── Nutrition checkins ────────────────────────────────────────────────────────
@@ -153,14 +136,8 @@ export async function syncNutritionCheckin(checkin: NutritionCheckin): Promise<v
       },
       { onConflict: 'user_id,date' },
     );
-    if (error) {
-      console.log('Sync: nutrition failed', checkin.date, error.message);
-    } else {
-      console.log('Sync: nutrition synced', checkin.date);
-    }
-  } catch (e) {
-    console.log('Sync: nutrition failed', checkin.date, e);
-  }
+    if (error) { /* retry on next sync */ }
+  } catch {}
 }
 
 // ── Plan ──────────────────────────────────────────────────────────────────────
@@ -202,14 +179,8 @@ export async function syncPlan(): Promise<void> {
       }));
     }
 
-    if (error) {
-      console.log('Sync: plan failed', error.message);
-    } else {
-      console.log('Sync: plan synced');
-    }
-  } catch (e) {
-    console.log('Sync: plan failed', e);
-  }
+    if (error) { /* retry on next sync */ }
+  } catch {}
 }
 
 // ── Sync all pending (retry queue) ────────────────────────────────────────────
@@ -226,9 +197,7 @@ export async function syncAllPending(): Promise<void> {
 
     await syncNutritionCheckin(useNutritionStore.getState().todayCheckin);
     await syncPlan();
-  } catch (e) {
-    console.log('Sync: syncAllPending error', e);
-  }
+  } catch {}
 }
 
 // ── Pull from cloud (fresh install restore) ───────────────────────────────────
@@ -312,10 +281,7 @@ export async function pullFromCloud(): Promise<void> {
       });
     }
 
-    console.log('Sync: pull from cloud complete');
-  } catch (e) {
-    console.log('Sync: pullFromCloud error', e);
-  }
+  } catch {}
 }
 
 // ── Debounced nutrition helper ────────────────────────────────────────────────

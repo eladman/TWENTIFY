@@ -1,0 +1,22 @@
+App Store Connect — Category & Age Rating
+
+Primary Category: Health & Fitness
+Secondary Category: Lifestyle
+
+Age Rating: 4+
+
+Content Descriptions (all set to "None"):
+  - Cartoon or Fantasy Violence: None
+  - Realistic Violence: None
+  - Prolonged Graphic or Sadistic Realistic Violence: None
+  - Profanity or Crude Humor: None
+  - Mature/Suggestive Themes: None
+  - Horror/Fear Themes: None
+  - Medical/Treatment Information: None
+  - Alcohol, Tobacco, or Drug Use or References: None
+  - Simulated Gambling: None
+  - Sexual Content or Nudity: None
+  - Unrestricted Web Access: No
+  - Gambling and Contests: No
+
+Made for Kids: No

@@ -72,7 +72,7 @@ function useFadeIn(delay: number) {
     const config = { duration: 350, easing: Easing.out(Easing.ease) };
     opacity.value = withDelay(delay, withTiming(1, config));
     scale.value = withDelay(delay, withTiming(1, config));
-  }, []);
+  }, [delay, opacity, scale]);
 
   return useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -112,6 +112,86 @@ export default function WorkoutSummaryScreen() {
     router.dismissAll();
   };
 
+  // ── Computed stats (must be before early return for Rules of Hooks) ──
+
+  const duration = useMemo(
+    () => workout ? formatSummaryDuration(workout.durationSeconds) : '',
+    [workout],
+  );
+
+  const exerciseCount = workout?.exercises.length ?? 0;
+
+  const workingSets = useMemo(
+    () =>
+      workout
+        ? workout.exercises.reduce(
+            (sum, ex) => sum + ex.sets.filter((s) => s.completed).length,
+            0,
+          )
+        : 0,
+    [workout],
+  );
+
+  const totalVolume = useMemo(() => {
+    if (!workout) return '';
+    const total = workout.exercises.reduce(
+      (sum, ex) =>
+        sum +
+        ex.sets
+          .filter((s) => s.completed)
+          .reduce((s, set) => s + set.weightKg * set.reps, 0),
+      0,
+    );
+    return formatVolume(total, units);
+  }, [workout, units]);
+
+  // ── Progress items ────────────────────────────────────────────────
+
+  const progressItems = useMemo(() => {
+    if (!workout) return [];
+    return workout.exercises
+      .map((ex) => {
+        const currentWeight = getWorkingWeight(ex.sets);
+        if (currentWeight === 0) return null;
+
+        const previousSets = getPreviousSessionSets(ex.exerciseId, history);
+        if (!previousSets) return null;
+
+        const previousWeight = getWorkingWeight(previousSets);
+        if (previousWeight === 0) return null;
+
+        const exerciseData = exercises[ex.exerciseId];
+        return {
+          name: exerciseData?.name ?? ex.exerciseId,
+          currentWeightKg: currentWeight,
+          previousWeightKg: previousWeight,
+          increased: currentWeight > previousWeight,
+        };
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
+  }, [workout, history]);
+
+  const hasIncreases = progressItems.some((p) => p.increased);
+
+  // ── Citation selection ────────────────────────────────────────────
+
+  const citation = useMemo(() => {
+    if (!workout) return null;
+    if (progressItems.some((p) => p.increased)) {
+      return citations['kraemer_2004'];
+    }
+    const allCompleted = workout.exercises.every((ex) =>
+      ex.sets.every((s) => s.completed),
+    );
+    if (allCompleted) {
+      return citations['schoenfeld_2016_frequency'];
+    }
+    if (workingSets > 15) {
+      return citations['schoenfeld_2017_volume'];
+    }
+    return citations['iversen_2021'];
+  }, [progressItems, workout, workingSets]);
+
   // Edge case: no workout in history
   if (!workout) {
     return (
@@ -133,83 +213,6 @@ export default function WorkoutSummaryScreen() {
       </SafeAreaView>
     );
   }
-
-  // ── Computed stats ──────────────────────────────────────────────────
-
-  const duration = useMemo(
-    () => formatSummaryDuration(workout.durationSeconds),
-    [workout.durationSeconds],
-  );
-
-  const exerciseCount = workout.exercises.length;
-
-  const workingSets = useMemo(
-    () =>
-      workout.exercises.reduce(
-        (sum, ex) => sum + ex.sets.filter((s) => s.completed).length,
-        0,
-      ),
-    [workout.exercises],
-  );
-
-  const totalVolume = useMemo(() => {
-    const total = workout.exercises.reduce(
-      (sum, ex) =>
-        sum +
-        ex.sets
-          .filter((s) => s.completed)
-          .reduce((s, set) => s + set.weightKg * set.reps, 0),
-      0,
-    );
-    return formatVolume(total, units);
-  }, [workout.exercises, units]);
-
-  // ── Progress items ────────────────────────────────────────────────
-
-  const progressItems = useMemo(() => {
-    return workout.exercises
-      .map((ex) => {
-        const currentWeight = getWorkingWeight(ex.sets);
-        // Skip bodyweight (weight=0)
-        if (currentWeight === 0) return null;
-
-        const previousSets = getPreviousSessionSets(ex.exerciseId, history);
-        // Skip first-time exercises
-        if (!previousSets) return null;
-
-        const previousWeight = getWorkingWeight(previousSets);
-        if (previousWeight === 0) return null;
-
-        const exerciseData = exercises[ex.exerciseId];
-        return {
-          name: exerciseData?.name ?? ex.exerciseId,
-          currentWeightKg: currentWeight,
-          previousWeightKg: previousWeight,
-          increased: currentWeight > previousWeight,
-        };
-      })
-      .filter((p): p is NonNullable<typeof p> => p !== null);
-  }, [workout.exercises, history]);
-
-  const hasIncreases = progressItems.some((p) => p.increased);
-
-  // ── Citation selection ────────────────────────────────────────────
-
-  const citation = useMemo(() => {
-    if (progressItems.some((p) => p.increased)) {
-      return citations['kraemer_2004'];
-    }
-    const allCompleted = workout.exercises.every((ex) =>
-      ex.sets.every((s) => s.completed),
-    );
-    if (allCompleted) {
-      return citations['schoenfeld_2016_frequency'];
-    }
-    if (workingSets > 15) {
-      return citations['schoenfeld_2017_volume'];
-    }
-    return citations['iversen_2021'];
-  }, [progressItems, workout.exercises, workingSets]);
 
   // ── Render ────────────────────────────────────────────────────────
 

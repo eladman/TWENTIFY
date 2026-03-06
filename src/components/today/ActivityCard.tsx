@@ -270,7 +270,6 @@ const styles = StyleSheet.create({
   },
   exerciseIndex: {
     width: 20,
-    color: colors.textMuted,
   },
   exerciseNameBtn: {
     flex: 1,

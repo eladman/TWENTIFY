@@ -118,7 +118,7 @@ function useFadeIn(delay: number) {
     const config = { duration: 350, easing: Easing.out(Easing.ease) };
     opacity.value = withDelay(delay, withTiming(1, config));
     translateY.value = withDelay(delay, withTiming(0, config));
-  }, []);
+  }, [delay, opacity, translateY]);
 
   const style = useAnimatedStyle(() => ({
     opacity: opacity.value,

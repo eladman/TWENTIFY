@@ -150,7 +150,7 @@ export default function ActiveRunScreen() {
     return () => {
       deactivateKeepAwake();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentional mount-only: session init must run exactly once
   }, []);
 
   // ── GPS tracking ────────────────────────────────────────────────
@@ -203,7 +203,7 @@ export default function ActiveRunScreen() {
       locationSubRef.current?.remove();
       locationSubRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentional mount-only: GPS subscription must start once
   }, []);
 
   // ── Elapsed pause tracking ─────────────────────────────────────

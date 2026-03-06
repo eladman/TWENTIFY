@@ -554,8 +554,6 @@ function countCitations(
 // ── Main export ─────────────────────────────────────────────────────────────
 
 export function generatePlan(input: PlanInput): GeneratedPlan {
-  console.log('[generatePlan] input:', JSON.stringify(input, null, 2));
-
   const hasGym = input.domains.includes('gym');
   const hasRunning = input.domains.includes('running');
   const hasNutrition = input.domains.includes('nutrition');
@@ -577,8 +575,6 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
     gymDaysPerWeek = hasGym ? (input.gymDaysPerWeek ?? 3) as 0 | 3 | 4 : 0;
     numRunDays = hasRunning ? (gymDaysPerWeek === 0 ? 3 : 2) as 0 | 2 | 3 : 0;
   }
-
-  console.log('[generatePlan] gymDaysPerWeek:', gymDaysPerWeek, 'numRunDays:', numRunDays);
 
   // Gym plan
   let gymPlan: GeneratedGymPlan | undefined;
@@ -611,8 +607,6 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
     numRunDays,
     hasNutrition,
   );
-
-  console.log('[generatePlan] weeklySchedule:', weeklySchedule.map(d => `${d.label}: ${d.activity}`));
 
   // Citation count
   const totalCitations = countCitations(gymPlan, nutritionPlan?.rules);
