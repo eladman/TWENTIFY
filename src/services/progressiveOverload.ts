@@ -16,6 +16,7 @@ export interface ExerciseProgression {
   exerciseId: string;
   sets: SetTarget[];
   progressionNote?: string;
+  effortGuidance?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -26,10 +27,20 @@ function isLowerBody(exerciseId: string): boolean {
   return exercise.movementPattern === 'squat' || exercise.movementPattern === 'hinge';
 }
 
+function isIsolation(exerciseId: string): boolean {
+  const exercise = exercises[exerciseId];
+  return exercise?.category === 'isolation';
+}
+
 function getWeightIncrement(
   equipment: ExerciseEquipment,
   isLower: boolean,
+  isolation: boolean,
 ): number {
+  if (isolation) {
+    // Isolation lifts progress with smaller increments
+    return equipment === 'bodyweight' ? 0 : 1;
+  }
   switch (equipment) {
     case 'barbell':
       return isLower ? 5 : 2.5;
@@ -127,10 +138,12 @@ export function calculateNextSession(
         note: 'First session. Start light and find your working weight.',
       })),
       progressionNote: 'First session. Start light and find your working weight.',
+      effortGuidance: 'Start light. Focus on learning the movement.',
     };
   }
 
   const lower = isLowerBody(exerciseId);
+  const iso = isIsolation(exerciseId);
   const lastWeight = getWorkingWeight(completedLast);
   const lastTotalReps = getTotalReps(lastSession);
 
@@ -165,6 +178,7 @@ export function calculateNextSession(
               note: 'Deload: -10%',
             })),
             progressionNote: 'Deload week: -10% weight. Focus on form.',
+            effortGuidance: 'Deload week. Focus on form, not intensity.',
           };
         }
       }
@@ -186,27 +200,35 @@ export function calculateNextSession(
           isDeload: false,
         })),
         progressionNote: `↑ +2 reps per set from last session`,
+        effortGuidance: 'Challenging but controlled. You could do 2-3 more reps.',
       };
     }
 
-    const increment = getWeightIncrement(equipment, lower);
+    const increment = getWeightIncrement(equipment, lower, iso);
     const newWeight = lastWeight + increment;
+    const note = iso
+      ? 'Small weight increase — isolation lifts progress slowly.'
+      : 'Weight increase from last session';
 
-    return {
+    const result: ExerciseProgression = {
       exerciseId,
       sets: completedLast.map((_, i) => ({
         setNumber: i + 1,
         targetReps: repRange,
         targetWeightKg: newWeight,
         isDeload: false,
-        note: `Weight increase from last session`,
+        note,
       })),
       progressionNote: `↑ ${increment}kg from last session`,
     };
+    result.effortGuidance = iso
+      ? 'Push close to failure. Last 2 reps should be tough.'
+      : 'Challenging but controlled. You could do 2-3 more reps.';
+    return result;
   }
 
   // Step 3 — Not at top of range → keep same weight, aim for +1 rep
-  return {
+  const sameWeightResult: ExerciseProgression = {
     exerciseId,
     sets: completedLast.map((_, i) => ({
       setNumber: i + 1,
@@ -216,6 +238,10 @@ export function calculateNextSession(
     })),
     progressionNote: 'Same weight. Aim for +1 rep per set.',
   };
+  sameWeightResult.effortGuidance = iso
+    ? 'Push close to failure. Last 2 reps should be tough.'
+    : 'Challenging but controlled. You could do 2-3 more reps.';
+  return sameWeightResult;
 }
 
 // ── Workout-level helper ───────────────────────────────────────────

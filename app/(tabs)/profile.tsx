@@ -124,6 +124,7 @@ export default function ProfileScreen() {
           try {
             await signOut();
             toast.show('Signed out');
+            router.replace('/(auth)/welcome');
           } catch (err: any) {
             toast.error(err?.message ?? 'Sign out failed');
           }

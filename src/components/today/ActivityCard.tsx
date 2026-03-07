@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -16,6 +16,9 @@ import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { exercises } from '@/data/exercises';
 import { usePlanStore } from '@/stores/usePlanStore';
+import { useUserStore } from '@/stores/useUserStore';
+import { useWorkoutStore } from '@/stores/useWorkoutStore';
+import { getWeeklyVolumeSummary } from '@/utils/weeklyVolume';
 import { formatDuration, formatReps } from '@/utils/formatters';
 import type { TodayState } from './useToday';
 import type { DayPlan } from '@/types/plan';
@@ -39,6 +42,13 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
   const router = useRouter();
   const currentWeek = usePlanStore((s) => s.currentWeek);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const goal = useUserStore((s) => s.goal);
+  const workoutHistory = useWorkoutStore((s) => s.history);
+
+  const volumeSummary = useMemo(() => {
+    if (goal !== 'muscle_build') return null;
+    return getWeeklyVolumeSummary(workoutHistory, exercises);
+  }, [goal, workoutHistory]);
 
   if (state === 'no_plan') {
     return (
@@ -146,6 +156,12 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
             </Text>
           )}
         </View>
+
+        {volumeSummary && volumeSummary.totalSets > 0 && (
+          <Text variant="caption" color={colors.textMuted} style={styles.volumeContext}>
+            ~{volumeSummary.totalSets} sets this week · {volumeSummary.muscleGroups} muscle groups
+          </Text>
+        )}
 
         <StartButtonPulse>
           <Button
@@ -281,6 +297,9 @@ const styles = StyleSheet.create({
   moreText: {
     marginTop: spacing.xs,
     marginLeft: 20,
+  },
+  volumeContext: {
+    marginTop: spacing.md,
   },
   startButton: {
     marginTop: spacing.xl,

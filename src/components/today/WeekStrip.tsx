@@ -17,10 +17,8 @@ interface WeekStripProps {
 const SQUARE_SIZE = 36;
 
 function getActivityEmoji(day: WeekDay): string {
-  if (day.status === 'completed_gym') return '\u{1F3CB}';
-  if (day.status === 'completed_run') return '\u{1F3C3}';
-  if (day.activity === 'gym') return '\u{1F4AA}';
-  if (day.activity === 'run') return '\u{1F45F}';
+  if (day.status === 'completed_gym' || day.activity === 'gym') return '\u{1F4AA}';
+  if (day.status === 'completed_run' || day.activity === 'run') return '\u{1F45F}';
   return '';
 }
 
@@ -88,9 +86,8 @@ export function WeekStrip({ weekDays, completedCount, totalScheduled, onSelectDa
 function getSquareStyle(status: WeekDay['status']) {
   switch (status) {
     case 'completed_gym':
-      return { backgroundColor: colors.accentLight };
     case 'completed_run':
-      return { backgroundColor: 'rgba(48, 209, 88, 0.12)' };
+      return { backgroundColor: 'rgba(48, 209, 88, 0.15)' };
     case 'scheduled':
       return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.cardBorder };
     case 'missed':

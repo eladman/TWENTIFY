@@ -20,6 +20,7 @@ import { useUserStore } from '@/stores/useUserStore';
 import { exercises } from '@/data/exercises';
 import { citations } from '@/data/citations';
 import { formatVolume, formatWeight } from '@/utils/formatters';
+import { getWeeklyVolumeSets } from '@/utils/weeklyVolume';
 import type { SetData, CompletedWorkout } from '@/types/workout';
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -101,6 +102,7 @@ export default function WorkoutSummaryScreen() {
   const router = useRouter();
   const history = useWorkoutStore((s) => s.history);
   const units = useUserStore((s) => s.settings.units);
+  const goal = useUserStore((s) => s.goal);
 
   const workout = history[history.length - 1];
 
@@ -192,6 +194,15 @@ export default function WorkoutSummaryScreen() {
     return citations['iversen_2021'];
   }, [progressItems, workout, workingSets]);
 
+  // ── Weekly volume for muscle_build ──────────────────────────────
+  const weeklyVolume = useMemo(() => {
+    if (goal !== 'muscle_build') return null;
+    return getWeeklyVolumeSets(history, exercises);
+  }, [goal, history]);
+
+  const VOLUME_TARGET = 16; // sets per major muscle group per week
+  const majorMuscles = ['quadriceps', 'glutes', 'chest', 'lats', 'shoulders', 'hamstrings'];
+
   // Edge case: no workout in history
   if (!workout) {
     return (
@@ -243,6 +254,32 @@ export default function WorkoutSummaryScreen() {
             </View>
           </Card>
         </Animated.View>
+
+        {/* Weekly Volume (muscle_build only) */}
+        {weeklyVolume && (
+          <Animated.View style={[styles.progressSection, gridAnim]}>
+            <View style={styles.divider} />
+            <Text variant="heading.sm" style={styles.progressHeading}>
+              Weekly Volume
+            </Text>
+            {majorMuscles.map((muscle) => {
+              const current = weeklyVolume[muscle] ?? 0;
+              const ratio = VOLUME_TARGET > 0 ? current / VOLUME_TARGET : 0;
+              const volumeColor =
+                ratio >= 0.8 && ratio <= 1.2 ? colors.success : colors.warning;
+              return (
+                <View key={muscle} style={styles.progressRow}>
+                  <Text variant="body.sm">
+                    {muscle.charAt(0).toUpperCase() + muscle.slice(1).replace('_', ' ')}:{' '}
+                    <Text variant="body.sm" color={volumeColor}>
+                      {current}/{VOLUME_TARGET} sets
+                    </Text>
+                  </Text>
+                </View>
+              );
+            })}
+          </Animated.View>
+        )}
 
         {/* Progress section */}
         {hasIncreases && (

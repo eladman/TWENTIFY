@@ -2,7 +2,7 @@ import type { DayPlan, DayActivity, GymPlan, RunPlan, PlanInput } from '@/types/
 import type { WorkoutTemplate, WorkoutExercise, TargetSet } from '@/types/workout';
 import type { RunTemplate } from '@/types/run';
 import type { NutritionPlan, NutritionGoal } from '@/types/nutrition';
-import type { EquipmentAccess, FitnessLevel, RunningLevel } from '@/types/user';
+import type { EquipmentAccess, FitnessLevel, RunningLevel, Goal } from '@/types/user';
 
 import { exercises } from '@/data/exercises';
 import {
@@ -133,26 +133,34 @@ function generateGymPlan(
   gymDays: 2 | 3 | 4,
   equipment: EquipmentAccess,
   fitnessLevel: FitnessLevel,
+  goal: Goal,
 ): GeneratedGymPlan {
   const isBeginnerSets = fitnessLevel === 'beginner';
   const mainSets = isBeginnerSets ? 2 : 3;
   const optionalSets = 2;
 
   const templates: WorkoutTemplate[] =
-    gymDays === 4
-      ? build4DayTemplates(mainSets, optionalSets, equipment, isBeginnerSets)
-      : build3DayTemplates(mainSets, equipment, isBeginnerSets); // 2-day reuses same A/B templates
+    goal === 'muscle_build'
+      ? gymDays === 4
+        ? buildMuscleBuild4DayTemplates(equipment, isBeginnerSets)
+        : buildMuscleBuild3DayTemplates(equipment, isBeginnerSets)
+      : gymDays === 4
+        ? build4DayTemplates(mainSets, optionalSets, equipment, isBeginnerSets)
+        : build3DayTemplates(mainSets, equipment, isBeginnerSets); // 2-day reuses same A/B templates
 
   // Collect all exercise IDs and compute weekly volume
   const exerciseIds: string[] = [];
   const weeklyVolumePerMuscle: Record<string, number> = {};
 
   // For volume calculation, account for how many times each template is used per week
+  const isMBuild3Day = goal === 'muscle_build' && templates.length === 3;
   const weeklyTemplateUses =
     gymDays === 4
       ? [1, 1, 1, 1] // each used 1x per week
       : gymDays === 3
-        ? [2, 1] // A used 2x, B used 1x (A/B/A pattern)
+        ? isMBuild3Day
+          ? [1, 1, 1] // A/B/C rotation — each used 1x per week
+          : [2, 1] // A used 2x, B used 1x (A/B/A pattern)
         : [1, 1]; // 2-day: each template used 1x per week
 
   for (let i = 0; i < templates.length; i++) {
@@ -182,6 +190,136 @@ function generateGymPlan(
     exerciseIds,
     weeklyVolumePerMuscle,
   };
+}
+
+// ── Muscle Build templates ──────────────────────────────────────────────────
+
+function buildMuscleBuild3DayTemplates(
+  equipment: EquipmentAccess,
+  isBeginner: boolean,
+): WorkoutTemplate[] {
+  // Day A (Full Body A): Squat, Bench, Row, Lateral Raise, Bicep Curl
+  const exercisesA: WorkoutExercise[] = [
+    makeWorkoutExercise('barbell_squat', 4, [6, 10], equipment),
+    makeWorkoutExercise('bench_press', 4, [6, 10], equipment),
+    makeWorkoutExercise('barbell_row', 3, [8, 12], equipment),
+    makeWorkoutExercise('lateral_raise', 3, [12, 15], equipment),
+    makeWorkoutExercise('bicep_curl', 2, [10, 15], equipment),
+  ];
+
+  // Day B (Full Body B): RDL, OHP, Pull-Up/Lat Pulldown, Leg Curl, Tricep Extension
+  const exercisesB: WorkoutExercise[] = [
+    makeWorkoutExercise('romanian_deadlift', 4, [8, 10], equipment),
+    makeWorkoutExercise('overhead_press', 3, [6, 10], equipment),
+    makeWorkoutExercise(resolveExercise('pullup', equipment), 3, [6, 12], equipment),
+    makeWorkoutExercise('leg_curl', 3, [10, 15], equipment),
+    makeWorkoutExercise('tricep_extension', 2, [10, 15], equipment),
+  ];
+
+  // Day C (Full Body C): Leg Press, Incline DB Press, Cable Row, Calf Raise, Face Pull
+  const exercisesC: WorkoutExercise[] = [
+    makeWorkoutExercise('leg_press', 4, [8, 12], equipment),
+    makeWorkoutExercise('incline_db_press', 3, [8, 12], equipment),
+    makeWorkoutExercise('cable_row', 3, [8, 12], equipment),
+    makeWorkoutExercise('calf_raise', 3, [12, 15], equipment),
+    makeWorkoutExercise('face_pull', 2, [12, 15], equipment),
+  ];
+
+  const templateA: WorkoutTemplate = {
+    id: 'mb_full_body_a',
+    name: 'Full Body A',
+    type: 'full_body_a',
+    exercises: exercisesA,
+    estimatedDurationMin: estimateGymDuration(exercisesA),
+  };
+  const templateB: WorkoutTemplate = {
+    id: 'mb_full_body_b',
+    name: 'Full Body B',
+    type: 'full_body_b',
+    exercises: exercisesB,
+    estimatedDurationMin: estimateGymDuration(exercisesB),
+  };
+  const templateC: WorkoutTemplate = {
+    id: 'mb_full_body_c',
+    name: 'Full Body C',
+    type: 'full_body_c',
+    exercises: exercisesC,
+    estimatedDurationMin: estimateGymDuration(exercisesC),
+  };
+
+  return [templateA, templateB, templateC];
+}
+
+function buildMuscleBuild4DayTemplates(
+  equipment: EquipmentAccess,
+  isBeginner: boolean,
+): WorkoutTemplate[] {
+  // Lower A: Squat, RDL, Leg Press, Leg Curl, Calf Raise
+  const lowerAExercises: WorkoutExercise[] = [
+    makeWorkoutExercise('barbell_squat', 4, [6, 10], equipment),
+    makeWorkoutExercise('romanian_deadlift', 3, [8, 10], equipment),
+    makeWorkoutExercise('leg_press', 3, [10, 12], equipment),
+    makeWorkoutExercise('leg_curl', 3, [10, 15], equipment),
+    makeWorkoutExercise('calf_raise', 3, [12, 15], equipment),
+  ];
+
+  // Upper A: Bench, Row, OHP, Bicep Curl, Tricep Pushdown
+  const upperAExercises: WorkoutExercise[] = [
+    makeWorkoutExercise('bench_press', 4, [6, 10], equipment),
+    makeWorkoutExercise('barbell_row', 4, [8, 10], equipment),
+    makeWorkoutExercise('overhead_press', 3, [8, 10], equipment),
+    makeWorkoutExercise('bicep_curl', 2, [10, 15], equipment),
+    makeWorkoutExercise('tricep_pushdown', 2, [10, 15], equipment),
+  ];
+
+  // Lower B: Deadlift, Bulgarian Split Squat, Leg Extension, Leg Curl, Calf Raise
+  const lowerBExercises: WorkoutExercise[] = [
+    makeWorkoutExercise('conventional_deadlift', 3, [5, 8], equipment),
+    makeWorkoutExercise('bulgarian_split_squat', 3, [8, 12], equipment),
+    makeWorkoutExercise('leg_extension', 3, [10, 15], equipment),
+    makeWorkoutExercise('leg_curl', 3, [10, 15], equipment),
+    makeWorkoutExercise('calf_raise', 3, [12, 15], equipment),
+  ];
+
+  // Upper B: Incline DB Press, Pull-Up/Lat Pulldown, Lateral Raise, Face Pull, Hammer Curl
+  const upperBExercises: WorkoutExercise[] = [
+    makeWorkoutExercise('incline_db_press', 3, [8, 12], equipment),
+    makeWorkoutExercise(resolveExercise('pullup', equipment), 4, [6, 12], equipment),
+    makeWorkoutExercise('lateral_raise', 3, [12, 15], equipment),
+    makeWorkoutExercise('face_pull', 3, [12, 15], equipment),
+    makeWorkoutExercise('hammer_curl', 2, [10, 15], equipment),
+  ];
+
+  const lowerA: WorkoutTemplate = {
+    id: 'mb_lower_a',
+    name: 'Lower Body A',
+    type: 'lower_a',
+    exercises: lowerAExercises,
+    estimatedDurationMin: estimateGymDuration(lowerAExercises),
+  };
+  const upperA: WorkoutTemplate = {
+    id: 'mb_upper_a',
+    name: 'Upper Body A',
+    type: 'upper_a',
+    exercises: upperAExercises,
+    estimatedDurationMin: estimateGymDuration(upperAExercises),
+  };
+  const lowerB: WorkoutTemplate = {
+    id: 'mb_lower_b',
+    name: 'Lower Body B',
+    type: 'lower_b',
+    exercises: lowerBExercises,
+    estimatedDurationMin: estimateGymDuration(lowerBExercises),
+  };
+  const upperB: WorkoutTemplate = {
+    id: 'mb_upper_b',
+    name: 'Upper Body B',
+    type: 'upper_b',
+    exercises: upperBExercises,
+    estimatedDurationMin: estimateGymDuration(upperBExercises),
+  };
+
+  return [lowerA, upperA, lowerB, upperB];
 }
 
 function build3DayTemplates(
@@ -458,6 +596,7 @@ const SCHEDULE_LAYOUTS: Record<string, DayActivity[]> = {
 // Template assignment order for gym days within a layout
 const GYM_2DAY_SEQUENCE = [0, 1]; // A, B
 const GYM_3DAY_SEQUENCE = [0, 1, 0]; // A, B, A
+const GYM_3DAY_MB_SEQUENCE = [0, 1, 2]; // A, B, C (muscle build rotation)
 const GYM_4DAY_SEQUENCE = [0, 1, 2, 3]; // lowerA, upperA, lowerB, upperB
 
 function buildWeeklySchedule(
@@ -480,7 +619,14 @@ function buildWeeklySchedule(
   const key = `gym${gymDays}_run${runDays}`;
   const layout = SCHEDULE_LAYOUTS[key] ?? SCHEDULE_LAYOUTS['gym3_run0'];
 
-  const gymSequence = gymDays === 4 ? GYM_4DAY_SEQUENCE : gymDays === 2 ? GYM_2DAY_SEQUENCE : GYM_3DAY_SEQUENCE;
+  const gymSequence =
+    gymDays === 4
+      ? GYM_4DAY_SEQUENCE
+      : gymDays === 2
+        ? GYM_2DAY_SEQUENCE
+        : gymTemplates && gymTemplates.length === 3
+          ? GYM_3DAY_MB_SEQUENCE
+          : GYM_3DAY_SEQUENCE;
   let gymIdx = 0;
   let runIdx = 0;
 
@@ -583,6 +729,7 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
       gymDaysPerWeek as 2 | 3 | 4,
       equipmentAccess,
       input.fitnessLevel,
+      input.goal,
     );
   }
 

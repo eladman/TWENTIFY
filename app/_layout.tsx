@@ -5,8 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { setupNotificationHandler, rescheduleReminders } from '@/services/notifications';
-import { getCurrentUser } from '@/services/auth';
 import { initAnalytics, analytics } from '@/services/analytics';
+import { supabase } from '@/services/supabase';
 import { useUserStore } from '@/stores/useUserStore';
 import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { useRunStore } from '@/stores/useRunStore';
@@ -46,23 +46,33 @@ export default function RootLayout() {
     }
   }, []);
 
-  // Restore auth session on mount, then sync or pull from cloud
+  // Reactive auth listener — fires immediately with current session and on all auth events
   useEffect(() => {
-    getCurrentUser().then(async (user) => {
-      if (user) {
-        useUserStore.getState().setAuth(user.id, user.email ?? null);
-        analytics.identify(user.id, { email: user.email });
-        await ensureUserRecord();
-        const workouts = useWorkoutStore.getState().history;
-        const runs = useRunStore.getState().history;
-        if (workouts.length === 0 && runs.length === 0) {
-          void pullFromCloud();
+    if (!supabase) return;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          const user = session.user;
+          useUserStore.getState().setAuth(user.id, user.email ?? null);
+          analytics.identify(user.id, { email: user.email });
+          await ensureUserRecord();
+
+          const workouts = useWorkoutStore.getState().history;
+          const runs = useRunStore.getState().history;
+          if (workouts.length === 0 && runs.length === 0) {
+            void pullFromCloud();
+          } else {
+            void syncAllPending();
+            void syncUserProfile();
+          }
         } else {
-          void syncAllPending();
-          void syncUserProfile();
+          useUserStore.getState().clearAuth();
         }
       }
-    });
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Re-sync pending items whenever the app comes back to the foreground
@@ -111,6 +121,7 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.background },
         }}
       >
+        <Stack.Screen name="(auth)" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
@@ -135,6 +146,10 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="paywall"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 350 }}
+        />
+        <Stack.Screen
+          name="nutrition/index"
           options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 350 }}
         />
       </Stack>

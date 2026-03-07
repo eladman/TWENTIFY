@@ -124,8 +124,8 @@ export async function signOut(): Promise<void> {
 export async function getCurrentUser(): Promise<User | null> {
   if (!isSupabaseConfigured() || !supabase) return null;
 
-  const { data, error } = await supabase.auth.getUser();
-  if (error) return null;
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return null;
 
-  return data.user ?? null;
+  return data.session.user;
 }

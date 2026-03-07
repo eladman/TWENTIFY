@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandStorage } from './storage';
@@ -64,7 +65,11 @@ export const useUserStore = create<UserState>()(
       setSubscriptionTier: (tier) => set({ subscriptionTier: tier }),
       setAuth: (userId, email) => set({ authUserId: userId, authEmail: email }),
       clearAuth: () => set({ authUserId: null, authEmail: null }),
-      reset: () => set(initialState),
+      reset: () => set((state) => ({
+        ...initialState,
+        authUserId: state.authUserId,
+        authEmail: state.authEmail,
+      })),
     }),
     {
       name: 'user-store',
@@ -72,3 +77,12 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
+
+export function useUserStoreHydrated(): boolean {
+  const [hydrated, setHydrated] = useState(useUserStore.persist.hasHydrated());
+  useEffect(() => {
+    const unsub = useUserStore.persist.onFinishHydration(() => setHydrated(true));
+    return () => unsub();
+  }, []);
+  return hydrated;
+}

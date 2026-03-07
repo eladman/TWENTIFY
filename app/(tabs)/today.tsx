@@ -1,16 +1,18 @@
 import { ScrollView, RefreshControl, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, Easing } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
 import { formatDate } from '@/utils/formatters';
 import { useToday } from '@/components/today/useToday';
 import { ActivityCard } from '@/components/today/ActivityCard';
-import { NutritionCard } from '@/components/today/NutritionCard';
+import { MacrosCard } from '@/components/today/MacrosCard';
 import { WeekStrip } from '@/components/today/WeekStrip';
 
 export default function TodayScreen() {
+  const router = useRouter();
   const data = useToday();
 
   return (
@@ -51,11 +53,7 @@ export default function TodayScreen() {
             entering={FadeInDown.delay(80).duration(250).easing(Easing.out(Easing.ease))}
             style={styles.cardSpacing}
           >
-            <NutritionCard
-              proteinLogged={data.proteinLogged}
-              proteinTarget={data.proteinTarget}
-              onLogProtein={data.onLogProtein}
-            />
+            <MacrosCard onPress={() => router.push('/nutrition')} />
           </Animated.View>
         )}
 

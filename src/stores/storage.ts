@@ -1,7 +1,5 @@
 import { StateStorage } from 'zustand/middleware';
-
-// In-memory fallback used when MMKV is unavailable (e.g. Expo Go)
-const memoryStore: Record<string, string> = {};
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 let zustandStorageImpl: StateStorage;
 
@@ -16,12 +14,12 @@ try {
     getItem: (name) => mmkvStorage.getString(name) ?? null,
     removeItem: (name) => mmkvStorage.delete(name),
   };
-} catch {
-  // Expo Go fallback: simple in-memory store (state resets on reload, which is fine for dev)
+} catch (e) {
+  console.warn('[Storage] MMKV unavailable, falling back to AsyncStorage.', e);
   zustandStorageImpl = {
-    setItem: (name, value) => { memoryStore[name] = value; },
-    getItem: (name) => memoryStore[name] ?? null,
-    removeItem: (name) => { delete memoryStore[name]; },
+    setItem: (name, value) => AsyncStorage.setItem(name, value),
+    getItem: (name) => AsyncStorage.getItem(name),
+    removeItem: (name) => AsyncStorage.removeItem(name),
   };
 }
 

@@ -133,7 +133,7 @@ function getContainerStyle(
     case 'primary':
       return {
         ...base,
-        height: 52,
+        minHeight: 56,
         paddingVertical: spacing.lg,
         paddingHorizontal: spacing['3xl'],
         backgroundColor: pressed ? colors.accentDark : colors.accent,
@@ -141,7 +141,7 @@ function getContainerStyle(
     case 'secondary':
       return {
         ...base,
-        height: 52,
+        minHeight: 56,
         paddingVertical: spacing.lg,
         paddingHorizontal: spacing['3xl'],
         backgroundColor: pressed ? colors.background : 'transparent',

@@ -199,16 +199,20 @@ export function ExerciseView({
         align="center"
         style={styles.rpeGuide}
       >
-        RPE 7-8 (2-3 reps in reserve)
+        {progression.effortGuidance
+          ? `Target: RPE 7-9 — ${progression.effortGuidance}`
+          : 'RPE 7-8 (2-3 reps in reserve)'}
       </Text>
-      <Text
-        variant="caption"
-        color={colors.textMuted}
-        align="center"
-        style={styles.rpeCaption}
-      >
-        Should feel challenging but not maximal
-      </Text>
+      {!progression.effortGuidance && (
+        <Text
+          variant="caption"
+          color={colors.textMuted}
+          align="center"
+          style={styles.rpeCaption}
+        >
+          Should feel challenging but not maximal
+        </Text>
+      )}
 
       <Pressable onPress={() => setSheetVisible(true)} style={styles.whyBtn}>
         <Text variant="caption" color={colors.accent}>

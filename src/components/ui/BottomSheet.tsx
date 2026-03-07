@@ -1,18 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   Modal,
   View,
   Pressable,
   ViewStyle,
   Dimensions,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   Easing,
   interpolate,
   runOnJS,
@@ -50,16 +49,48 @@ export function BottomSheet({
   );
 
   const translateY = useSharedValue(sheetHeight);
+  const keyboardOffset = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
-      translateY.value = withSpring(0, { damping: 20, stiffness: 200 });
+      translateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
     } else {
       translateY.value = withTiming(sheetHeight, { duration: 250 });
+      keyboardOffset.value = 0;
     }
-  }, [visible, translateY, sheetHeight]);
+  }, [visible, translateY, keyboardOffset, sheetHeight]);
+
+  useEffect(() => {
+    if (!visible || Platform.OS !== 'ios') return;
+
+    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+      keyboardOffset.value = withTiming(e.endCoordinates.height, {
+        duration: e.duration,
+        easing: Easing.out(Easing.cubic),
+      });
+    });
+    const hideSub = Keyboard.addListener('keyboardWillHide', (e) => {
+      keyboardOffset.value = withTiming(0, {
+        duration: e.duration,
+        easing: Easing.out(Easing.cubic),
+      });
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible, keyboardOffset]);
+
+  const handleDismiss = useCallback(() => {
+    Keyboard.dismiss();
+    onDismiss();
+  }, [onDismiss]);
 
   const pan = Gesture.Pan()
+    .onStart(() => {
+      runOnJS(Keyboard.dismiss)();
+    })
     .onUpdate((event) => {
       translateY.value = Math.max(0, event.translationY);
     })
@@ -79,7 +110,7 @@ export function BottomSheet({
     });
 
   const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
+    transform: [{ translateY: translateY.value - keyboardOffset.value }],
     height: sheetHeight,
   }));
 
@@ -88,25 +119,20 @@ export function BottomSheet({
   }));
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onDismiss}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleDismiss}>
       <GestureHandlerRootView style={containerStyle}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={containerStyle}
-        >
-          <Animated.View style={[backdrop, backdropStyle]}>
-            <Pressable style={containerStyle} onPress={onDismiss} />
-          </Animated.View>
+        <Animated.View style={[backdrop, backdropStyle]}>
+          <Pressable style={containerStyle} onPress={handleDismiss} />
+        </Animated.View>
 
-          <GestureDetector gesture={pan}>
-            <Animated.View style={[sheetContainer, sheetStyle]}>
-              <View style={handleContainer}>
-                <View style={handle} />
-              </View>
-              {children}
-            </Animated.View>
-          </GestureDetector>
-        </KeyboardAvoidingView>
+        <GestureDetector gesture={pan}>
+          <Animated.View style={[sheetContainer, sheetStyle]}>
+            <View style={handleContainer}>
+              <View style={handle} />
+            </View>
+            {children}
+          </Animated.View>
+        </GestureDetector>
       </GestureHandlerRootView>
     </Modal>
   );
