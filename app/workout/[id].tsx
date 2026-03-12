@@ -103,10 +103,11 @@ export default function ActiveWorkoutScreen() {
             unitLabel={w.unitLabel}
             isBodyweight={w.isBodyweight}
             previousRef={w.previousRef}
-            onIncrementWeight={w.handleIncrementWeight}
-            onDecrementWeight={w.handleDecrementWeight}
-            onIncrementReps={w.handleIncrementReps}
-            onDecrementReps={w.handleDecrementReps}
+            placeholderWeight={w.placeholderWeight}
+            placeholderReps={w.placeholderReps}
+            placeholderSource={w.placeholderSource}
+            onWeightChange={w.handleSetWeight}
+            onRepsChange={w.handleSetReps}
             onCompleteSet={w.handleCompleteSet}
           />
         </ExerciseTransition>

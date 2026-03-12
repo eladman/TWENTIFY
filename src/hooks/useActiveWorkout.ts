@@ -31,12 +31,13 @@ export interface ActiveWorkoutState {
   weightStep: number;
   isBodyweight: boolean;
   previousRef: string;
+  placeholderWeight: number | null;
+  placeholderReps: number | null;
+  placeholderSource: 'last_session' | 'prev_set' | null;
   showFlash: boolean;
   progressions: ExerciseProgression[];
-  handleIncrementWeight: () => void;
-  handleDecrementWeight: () => void;
-  handleIncrementReps: () => void;
-  handleDecrementReps: () => void;
+  handleSetWeight: (value: number) => void;
+  handleSetReps: (value: number) => void;
   handleCompleteSet: () => void;
   handleSkipRest: () => void;
   handleRestComplete: () => void;
@@ -181,25 +182,42 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
     return `Previous: ${w}${unitLabel} \u00d7 ${set.reps}`;
   }, [currentExerciseId, setIndex, getLastSessionForExercise, units, unitLabel]);
 
+  // Placeholder from previous data
+  const { placeholderWeight, placeholderReps, placeholderSource } = useMemo(() => {
+    // Source A: previous session for the same exercise
+    const lastSets = getLastSessionForExercise(currentExerciseId);
+    if (lastSets && lastSets.length > 0) {
+      const set = lastSets[Math.min(setIndex, lastSets.length - 1)];
+      return {
+        placeholderWeight: kgToDisplayWeight(set.weightKg, units),
+        placeholderReps: set.reps,
+        placeholderSource: 'last_session' as const,
+      };
+    }
+    // Source B: previous set in current workout
+    if (setIndex > 0 && activeSession) {
+      const prevSet = activeSession.exercises[exerciseIndex]?.sets[setIndex - 1];
+      if (prevSet && prevSet.completed) {
+        return {
+          placeholderWeight: kgToDisplayWeight(prevSet.weightKg, units),
+          placeholderReps: prevSet.reps,
+          placeholderSource: 'prev_set' as const,
+        };
+      }
+    }
+    return { placeholderWeight: null, placeholderReps: null, placeholderSource: null };
+  }, [currentExerciseId, setIndex, getLastSessionForExercise, units, activeSession, exerciseIndex]);
+
   // Weight/reps handlers
   const maxWeight = units === 'metric' ? 500 : 1000;
 
-  const handleIncrementWeight = useCallback(() => {
+  const handleSetWeight = useCallback((value: number) => {
     if (isBodyweight) return;
-    setDisplayWeight((w) => Math.min(maxWeight, Math.round((w + weightStep) * 10) / 10));
-  }, [weightStep, isBodyweight, maxWeight]);
+    setDisplayWeight(Math.min(maxWeight, Math.max(0, Math.round(value * 10) / 10)));
+  }, [isBodyweight, maxWeight]);
 
-  const handleDecrementWeight = useCallback(() => {
-    if (isBodyweight) return;
-    setDisplayWeight((w) => Math.max(0, Math.round((w - weightStep) * 10) / 10));
-  }, [weightStep, isBodyweight]);
-
-  const handleIncrementReps = useCallback(() => {
-    setDisplayReps((r) => Math.min(999, r + 1));
-  }, []);
-
-  const handleDecrementReps = useCallback(() => {
-    setDisplayReps((r) => Math.max(0, r - 1));
+  const handleSetReps = useCallback((value: number) => {
+    setDisplayReps(Math.min(999, Math.max(0, Math.round(value))));
   }, []);
 
   // Complete set
@@ -352,12 +370,13 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
     weightStep,
     isBodyweight,
     previousRef,
+    placeholderWeight,
+    placeholderReps,
+    placeholderSource,
     showFlash,
     progressions,
-    handleIncrementWeight,
-    handleDecrementWeight,
-    handleIncrementReps,
-    handleDecrementReps,
+    handleSetWeight,
+    handleSetReps,
     handleCompleteSet,
     handleSkipRest,
     handleRestComplete,

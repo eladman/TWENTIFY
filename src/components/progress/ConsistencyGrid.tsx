@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, ViewStyle, TextStyle, useWindowDimensions } from 'react-native';
+import { View, ViewStyle, TextStyle, useWindowDimensions, Text as RNText } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { getDaysInMonth, getDay, format } from 'date-fns';
 import { Card } from '@/components/ui/Card';
@@ -61,7 +61,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
   const gymDates = useMemo(() => {
     const s = new Set<string>();
     for (const w of workoutHistory) {
-      s.add(w.completedAt.split('T')[0]);
+      s.add(getDateString(new Date(w.completedAt)));
     }
     return s;
   }, [workoutHistory]);
@@ -69,7 +69,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
   const runDates = useMemo(() => {
     const s = new Set<string>();
     for (const r of runHistory) {
-      s.add(r.completedAt.split('T')[0]);
+      s.add(getDateString(new Date(r.completedAt)));
     }
     return s;
   }, [runHistory]);
@@ -90,13 +90,13 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const result: { state: CellState; isToday: boolean }[] = [];
+    const result: { state: CellState; isToday: boolean; activity: DayActivity | null }[] = [];
     let completed = 0;
     let planned = 0;
 
     // Leading padding
     for (let i = 0; i < firstDayJS; i++) {
-      result.push({ state: 'outside', isToday: false });
+      result.push({ state: 'outside', isToday: false, activity: null });
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -134,7 +134,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
         planned += 1;
       }
 
-      result.push({ state, isToday });
+      result.push({ state, isToday, activity: activity ?? null });
     }
 
     // Trailing padding
@@ -142,7 +142,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
     const remainder = totalCells % 7;
     if (remainder !== 0) {
       for (let i = 0; i < 7 - remainder; i++) {
-        result.push({ state: 'outside', isToday: false });
+        result.push({ state: 'outside', isToday: false, activity: null });
       }
     }
 
@@ -150,7 +150,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
   }, [year, monthIndex, gymDates, runDates, planMap]);
 
   const monthLabel = format(new Date(year, monthIndex, 1), 'MMMM yyyy');
-  const rows: { state: CellState; isToday: boolean }[][] = [];
+  const rows: { state: CellState; isToday: boolean; activity: DayActivity | null }[][] = [];
   for (let i = 0; i < cells.length; i += 7) {
     rows.push(cells.slice(i, i + 7));
   }
@@ -186,6 +186,7 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
                 state={cell.state}
                 isToday={cell.isToday}
                 size={cellSize}
+                activity={cell.activity}
               />
             ))}
           </Animated.View>
@@ -200,14 +201,23 @@ export function ConsistencyGrid({ month }: ConsistencyGridProps) {
   );
 }
 
+function getEmoji(state: CellState, activity: DayActivity | null): string {
+  if (state === 'completed_gym' || (state === 'scheduled' && activity === 'gym')) return '💪';
+  if (state === 'completed_run' || (state === 'scheduled' && activity === 'run')) return '👟';
+  if (state === 'completed_both') return '💪';
+  return '';
+}
+
 function GridCell({
   state,
   isToday,
   size,
+  activity,
 }: {
   state: CellState;
   isToday: boolean;
   size: number;
+  activity: DayActivity | null;
 }) {
   if (state === 'outside') {
     return <View style={{ width: size, height: size }} />;
@@ -215,6 +225,13 @@ function GridCell({
 
   const innerSize = isToday ? size - 4 : size;
   const innerStyle = getCellStyle(state, innerSize);
+  const emoji = getEmoji(state, activity);
+
+  const cellContent = emoji ? (
+    <RNText style={{ fontSize: 14, lineHeight: 18 }}>{emoji}</RNText>
+  ) : state === 'rest' ? (
+    <View style={restDash} />
+  ) : null;
 
   if (isToday) {
     return (
@@ -224,20 +241,12 @@ function GridCell({
           { width: size, height: size, borderRadius: CELL_RADIUS + 1 },
         ]}
       >
-        <View style={innerStyle}>
-          {state === 'completed_both' && <View style={greenDot} />}
-          {state === 'rest' && <View style={restDash} />}
-        </View>
+        <View style={innerStyle}>{cellContent}</View>
       </View>
     );
   }
 
-  return (
-    <View style={innerStyle}>
-      {state === 'completed_both' && <View style={greenDot} />}
-      {state === 'rest' && <View style={restDash} />}
-    </View>
-  );
+  return <View style={innerStyle}>{cellContent}</View>;
 }
 
 function getCellStyle(state: CellState, size: number): ViewStyle {
@@ -251,27 +260,15 @@ function getCellStyle(state: CellState, size: number): ViewStyle {
 
   switch (state) {
     case 'completed_gym':
-      return { ...base, backgroundColor: colors.accent };
     case 'completed_run':
-      return { ...base, backgroundColor: colors.success };
     case 'completed_both':
-      return { ...base, backgroundColor: colors.accent };
+      return { ...base, backgroundColor: 'rgba(48, 209, 88, 0.15)' };
     case 'rest':
       return { ...base };
     case 'scheduled':
-      return {
-        ...base,
-        borderWidth: 1.5,
-        borderStyle: 'dashed',
-        borderColor: colors.cardBorder,
-      };
+      return { ...base, backgroundColor: 'rgba(120, 120, 128, 0.12)' };
     case 'missed':
-      return {
-        ...base,
-        borderWidth: 1,
-        borderColor: colors.cardBorder,
-        backgroundColor: '#FFF0F0',
-      };
+      return { ...base, backgroundColor: 'rgba(255, 59, 48, 0.15)' };
     default:
       return base;
   }
@@ -310,16 +307,6 @@ const todayRing: ViewStyle = {
   borderColor: colors.accent,
   alignItems: 'center',
   justifyContent: 'center',
-};
-
-const greenDot: ViewStyle = {
-  position: 'absolute',
-  bottom: 2,
-  right: 2,
-  width: 6,
-  height: 6,
-  borderRadius: 3,
-  backgroundColor: colors.success,
 };
 
 const restDash: ViewStyle = {

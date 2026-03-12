@@ -8,8 +8,6 @@ import { setupNotificationHandler, rescheduleReminders } from '@/services/notifi
 import { initAnalytics, analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { useUserStore } from '@/stores/useUserStore';
-import { useWorkoutStore } from '@/stores/useWorkoutStore';
-import { useRunStore } from '@/stores/useRunStore';
 import { syncAllPending, syncUserProfile, pullFromCloud, ensureUserRecord } from '@/services/sync';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -57,15 +55,9 @@ export default function RootLayout() {
           useUserStore.getState().setAuth(user.id, user.email ?? null);
           analytics.identify(user.id, { email: user.email });
           await ensureUserRecord();
-
-          const workouts = useWorkoutStore.getState().history;
-          const runs = useRunStore.getState().history;
-          if (workouts.length === 0 && runs.length === 0) {
-            void pullFromCloud();
-          } else {
-            void syncAllPending();
-            void syncUserProfile();
-          }
+          await pullFromCloud();
+          void syncAllPending();
+          void syncUserProfile();
         } else {
           useUserStore.getState().clearAuth();
         }

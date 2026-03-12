@@ -6,7 +6,7 @@ import { useRunStore } from '@/stores/useRunStore';
 import { useNutritionStore } from '@/stores/useNutritionStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { analytics } from '@/services/analytics';
-import { syncAllPending } from '@/services/sync';
+import { syncAllPending, pullFromCloud } from '@/services/sync';
 import type { DayPlan, DayActivity } from '@/types/plan';
 import type { CompletedWorkout } from '@/types/workout';
 import type { CompletedRun } from '@/types/run';
@@ -57,7 +57,10 @@ export interface TodayData {
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 function getDateString(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function getTodayDayIndex(): number {
@@ -161,10 +164,10 @@ export function useToday(): TodayData {
 
       // Check if completed
       const hasGymCompletion = workoutHistory.some(
-        (w) => w.completedAt.split('T')[0] === dateStr
+        (w) => getDateString(new Date(w.completedAt)) === dateStr
       );
       const hasRunCompletion = runHistory.some(
-        (r) => r.completedAt.split('T')[0] === dateStr
+        (r) => getDateString(new Date(r.completedAt)) === dateStr
       );
 
       let status: WeekDayStatus;
@@ -206,7 +209,7 @@ export function useToday(): TodayData {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     ensureToday();
-    try { await syncAllPending(); } catch {}
+    try { await pullFromCloud(); await syncAllPending(); } catch {}
     setRefreshing(false);
   }, [ensureToday]);
 

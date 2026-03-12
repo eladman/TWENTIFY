@@ -1,11 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { radius } from '@/theme/radius';
 
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -13,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
-import { radius } from '@/theme/radius';
+import { fontFamilies } from '@/theme/typography';
 import { haptics } from '@/utils/haptics';
 import { formatReps } from '@/utils/formatters';
 import { getCitationsForExercise } from '@/data/citations';
@@ -32,68 +27,12 @@ interface ExerciseViewProps {
   unitLabel: string;
   isBodyweight: boolean;
   previousRef: string;
-  onIncrementWeight: () => void;
-  onDecrementWeight: () => void;
-  onIncrementReps: () => void;
-  onDecrementReps: () => void;
+  placeholderWeight: number | null;
+  placeholderReps: number | null;
+  placeholderSource: 'last_session' | 'prev_set' | null;
+  onWeightChange: (value: number) => void;
+  onRepsChange: (value: number) => void;
   onCompleteSet: () => void;
-}
-
-function StepperButton({ label, onPress }: { label: string; onPress: () => void }) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePress = () => {
-    haptics.light();
-    scale.value = withSequence(
-      withTiming(1.15, { duration: 100 }),
-      withTiming(1, { duration: 100 }),
-    );
-    onPress();
-  };
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <Pressable onPress={handlePress} style={styles.stepperBtn}>
-        <Text variant="heading.md" color={colors.accent}>
-          {label}
-        </Text>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function AnimatedCounter({ value }: { value: number }) {
-  const translateY = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  const prevValue = useRef(value);
-
-  useEffect(() => {
-    if (value !== prevValue.current) {
-      const direction = value > prevValue.current ? -1 : 1;
-      translateY.value = 8 * -direction;
-      opacity.value = 0;
-      translateY.value = withTiming(0, { duration: 150 });
-      opacity.value = withTiming(1, { duration: 150 });
-      prevValue.current = value;
-    }
-  }, [value, translateY, opacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-    opacity: opacity.value,
-  }));
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <Text variant="data.lg" align="center">
-        {value}
-      </Text>
-    </Animated.View>
-  );
 }
 
 export function ExerciseView({
@@ -107,13 +46,54 @@ export function ExerciseView({
   unitLabel,
   isBodyweight,
   previousRef,
-  onIncrementWeight,
-  onDecrementWeight,
-  onIncrementReps,
-  onDecrementReps,
+  placeholderWeight,
+  placeholderReps,
+  placeholderSource,
+  onWeightChange,
+  onRepsChange,
   onCompleteSet,
 }: ExerciseViewProps) {
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [weightText, setWeightText] = useState(displayWeight === 0 ? '' : String(displayWeight));
+  const [repsText, setRepsText] = useState(displayReps === 0 ? '' : String(displayReps));
+  const [weightFocused, setWeightFocused] = useState(false);
+  const [repsFocused, setRepsFocused] = useState(false);
+
+  // Sync local text state when exercise/set changes
+  const prevKeyRef = useRef('');
+  useEffect(() => {
+    const key = `${exerciseIndex}-${setIndex}`;
+    if (key === prevKeyRef.current) return;
+    prevKeyRef.current = key;
+    setWeightText(displayWeight === 0 ? '' : String(displayWeight));
+    setRepsText(displayReps === 0 ? '' : String(displayReps));
+  }, [exerciseIndex, setIndex, displayWeight, displayReps]);
+
+  const handleWeightBlur = useCallback(() => {
+    setWeightFocused(false);
+    const parsed = parseFloat(weightText);
+    if (!isNaN(parsed) && parsed >= 0) {
+      onWeightChange(parsed);
+      setWeightText(parsed === 0 ? '' : String(Math.round(parsed * 10) / 10));
+    } else if (weightText.trim() !== '') {
+      // Invalid non-empty input — revert to last known value
+      setWeightText(displayWeight === 0 ? '' : String(displayWeight));
+    }
+    // Empty input stays empty
+  }, [weightText, displayWeight, onWeightChange]);
+
+  const handleRepsBlur = useCallback(() => {
+    setRepsFocused(false);
+    const parsed = parseInt(repsText, 10);
+    if (!isNaN(parsed) && parsed >= 0) {
+      onRepsChange(parsed);
+      setRepsText(parsed === 0 ? '' : String(parsed));
+    } else if (repsText.trim() !== '') {
+      // Invalid non-empty input — revert to last known value
+      setRepsText(displayReps === 0 ? '' : String(displayReps));
+    }
+    // Empty input stays empty
+  }, [repsText, displayReps, onRepsChange]);
 
   const currentTarget = progression.sets[setIndex];
   const targetRepsStr = currentTarget
@@ -159,27 +139,58 @@ export function ExerciseView({
 
         {!isBodyweight && (
           <View style={styles.inputRow}>
-            <StepperButton label={'\u2212'} onPress={onDecrementWeight} />
-            <View style={styles.valueContainer}>
-              <AnimatedCounter value={displayWeight} />
+            <View style={styles.inputGroup}>
+              <Text variant="body.sm" color={colors.textSecondary} align="center" style={styles.inputLabel}>
+                Weight
+              </Text>
+              <View style={[styles.inputBox, weightFocused && styles.inputBoxFocused]}>
+                <TextInput
+                  style={styles.numberInput}
+                  value={weightText}
+                  onChangeText={setWeightText}
+                  onFocus={() => setWeightFocused(true)}
+                  onBlur={handleWeightBlur}
+                  keyboardType="decimal-pad"
+                  selectTextOnFocus
+                  textAlign="center"
+                  placeholder={placeholderWeight != null ? String(placeholderWeight) : '0.0'}
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
               <Text variant="body.sm" color={colors.textSecondary} align="center">
                 {unitLabel}
               </Text>
             </View>
-            <StepperButton label="+" onPress={onIncrementWeight} />
           </View>
         )}
 
-        <View style={[styles.inputRow, { marginTop: spacing.lg }]}>
-          <StepperButton label={'\u2212'} onPress={onDecrementReps} />
-          <View style={styles.valueContainer}>
-            <Text variant="body.sm" color={colors.textSecondary} align="center">
+        <View style={[styles.inputRow, !isBodyweight && styles.inputRowSpaced]}>
+          <View style={styles.inputGroup}>
+            <Text variant="body.sm" color={colors.textSecondary} align="center" style={styles.inputLabel}>
               Reps completed
             </Text>
-            <AnimatedCounter value={displayReps} />
+            <View style={[styles.inputBox, repsFocused && styles.inputBoxFocused]}>
+              <TextInput
+                style={styles.numberInput}
+                value={repsText}
+                onChangeText={setRepsText}
+                onFocus={() => setRepsFocused(true)}
+                onBlur={handleRepsBlur}
+                keyboardType="number-pad"
+                selectTextOnFocus
+                textAlign="center"
+                placeholder={placeholderReps != null ? String(placeholderReps) : '0'}
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
           </View>
-          <StepperButton label="+" onPress={onIncrementReps} />
         </View>
+
+        {placeholderSource && (
+          <Text variant="caption" color={colors.textMuted} align="center" style={styles.placeholderLabel}>
+            {placeholderSource === 'last_session' ? 'Last session' : 'From prev set'}
+          </Text>
+        )}
 
         {progressionNote ? (
           <Text
@@ -309,23 +320,43 @@ const styles = StyleSheet.create({
   },
   inputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.lg,
-    gap: spacing.xl,
   },
-  stepperBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.full,
+  inputRowSpaced: {
+    marginTop: spacing.md,
+  },
+  inputGroup: {
+    alignItems: 'center',
+    minWidth: 130,
+  },
+  inputLabel: {
+    marginBottom: spacing.xs,
+  },
+  inputBox: {
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
     borderWidth: 1.5,
-    borderColor: colors.accent,
-    justifyContent: 'center',
+    borderColor: colors.cardBorder,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    minWidth: 130,
     alignItems: 'center',
   },
-  valueContainer: {
-    minWidth: 80,
-    alignItems: 'center',
+  inputBoxFocused: {
+    borderColor: colors.accent,
+    backgroundColor: '#FFFFFF',
+  },
+  numberInput: {
+    fontFamily: fontFamilies.mono,
+    fontSize: 36,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    paddingVertical: 0,
+    minWidth: 90,
+  },
+  placeholderLabel: {
+    marginTop: spacing.sm,
   },
   progressionNote: {
     marginTop: spacing.lg,

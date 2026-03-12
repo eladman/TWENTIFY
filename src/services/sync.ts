@@ -205,9 +205,6 @@ export async function syncAllPending(): Promise<void> {
 export async function pullFromCloud(): Promise<void> {
   if (!isReady()) return;
   await ensureUserRecord();
-  const workoutHistory = useWorkoutStore.getState().history;
-  const runHistory = useRunStore.getState().history;
-  if (workoutHistory.length !== 0 || runHistory.length !== 0) return;
 
   try {
     const userId = useUserStore.getState().authUserId!;
@@ -220,7 +217,7 @@ export async function pullFromCloud(): Promise<void> {
       supabase!.from('user_profiles').select('*').eq('user_id', userId).single(),
     ]);
 
-    if (workoutsRes.data && workoutsRes.data.length > 0) {
+    if (workoutsRes.data) {
       const pulled: CompletedWorkout[] = workoutsRes.data.map((row: any) => ({
         id: row.id,
         templateId: row.workout_template,
@@ -230,10 +227,11 @@ export async function pullFromCloud(): Promise<void> {
         exercises: row.exercises ?? [],
         synced: true,
       }));
-      useWorkoutStore.setState((s) => ({ history: [...s.history, ...pulled] }));
+      const unsynced = useWorkoutStore.getState().history.filter((w) => !w.synced);
+      useWorkoutStore.setState({ history: [...unsynced, ...pulled] });
     }
 
-    if (runsRes.data && runsRes.data.length > 0) {
+    if (runsRes.data) {
       const pulled: CompletedRun[] = runsRes.data.map((row: any) => ({
         id: row.id,
         templateId: row.template_id,
@@ -245,10 +243,11 @@ export async function pullFromCloud(): Promise<void> {
         avgHr: row.avg_hr ?? undefined,
         synced: true,
       }));
-      useRunStore.setState((s) => ({ history: [...s.history, ...pulled] }));
+      const unsynced = useRunStore.getState().history.filter((r) => !r.synced);
+      useRunStore.setState({ history: [...unsynced, ...pulled] });
     }
 
-    if (checkinsRes.data && checkinsRes.data.length > 0) {
+    if (checkinsRes.data) {
       const today = new Date().toISOString().split('T')[0];
       const pulledHistory: NutritionCheckin[] = checkinsRes.data
         .filter((row: any) => row.date !== today)
@@ -259,11 +258,12 @@ export async function pullFromCloud(): Promise<void> {
           waterGlasses: row.water_glasses,
           followedPlan: row.followed_plan,
         }));
-      if (pulledHistory.length > 0) {
-        useNutritionStore.setState((s) => ({
-          history: [...s.history, ...pulledHistory],
-        }));
-      }
+      const unsyncedNutrition = useNutritionStore.getState().history.filter(
+        (c) => !pulledHistory.some((p) => p.date === c.date)
+      );
+      useNutritionStore.setState({
+        history: [...unsyncedNutrition, ...pulledHistory],
+      });
     }
 
     if (plansRes.data) {
