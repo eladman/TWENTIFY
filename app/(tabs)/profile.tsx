@@ -20,6 +20,7 @@ import {
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
 import { analytics } from '@/services/analytics';
+import { isAiCoachAvailable } from '@/services/aiCoach';
 
 // ── Display name mappings ──
 
@@ -206,6 +207,15 @@ export default function ProfileScreen() {
           fullWidth
           style={styles.editPlanButton}
         />
+        {isAiCoachAvailable() && (
+          <Button
+            variant="secondary"
+            label="Talk to AI Coach"
+            onPress={() => router.push('/(ai-coach)/chat' as any)}
+            fullWidth
+            style={styles.editPlanButton}
+          />
+        )}
         <Button
           variant="text"
           label="Reset plan"

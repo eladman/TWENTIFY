@@ -17,6 +17,7 @@ import { spacing } from '@/theme/spacing';
 import { useUserStore } from '@/stores/useUserStore';
 import { haptics } from '@/utils/haptics';
 import { analytics } from '@/services/analytics';
+import { isAiCoachAvailable } from '@/services/aiCoach';
 import type { Domain } from '@/types/user';
 
 const DOMAINS = [
@@ -191,7 +192,13 @@ export default function DomainsScreen() {
   const handleContinue = () => {
     analytics.track('domains_selected', { domains: selected });
     setDomains(selected);
-    router.push('/(onboarding)/assessment');
+
+    // Route to AI coach when available, fall back to assessment flow
+    if (isAiCoachAvailable()) {
+      router.push('/(ai-coach)/chat' as any);
+    } else {
+      router.push('/(onboarding)/assessment');
+    }
   };
 
   return (
