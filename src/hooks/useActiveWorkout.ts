@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { usePlanStore } from '@/stores/usePlanStore';
 import { useUserStore } from '@/stores/useUserStore';
-import { exercises } from '@/data/exercises';
+import { getExercise } from '@/data/exerciseBank';
 import { getTargetsForWorkout, type ExerciseProgression } from '@/services/progressiveOverload';
 import { displayWeightToKg, kgToDisplayWeight, getWeightStep, getUnitLabel } from '@/utils/formatters';
 import { analytics } from '@/services/analytics';
@@ -21,7 +21,7 @@ export interface ActiveWorkoutState {
   exerciseIndex: number;
   setIndex: number;
   totalExercises: number;
-  currentExercise: typeof exercises[string] | null;
+  currentExercise: ReturnType<typeof getExercise> | null;
   currentProgression: ExerciseProgression | null;
   totalSets: number;
   displayWeight: number;
@@ -62,7 +62,7 @@ function equipmentFromAccess(access?: string): ExerciseEquipment {
 }
 
 function isLowerBody(exerciseId: string): boolean {
-  const ex = exercises[exerciseId];
+  const ex = getExercise(exerciseId);
   if (!ex) return false;
   return ex.movementPattern === 'squat' || ex.movementPattern === 'hinge';
 }
@@ -144,7 +144,7 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
 
   // Current exercise data
   const currentExerciseId = template?.exercises[exerciseIndex]?.exerciseId ?? '';
-  const currentExercise = exercises[currentExerciseId] ?? null;
+  const currentExercise = getExercise(currentExerciseId) ?? null;
   const currentProgression = progressions[exerciseIndex] ?? null;
   const totalSets = currentProgression?.sets.length ?? template?.exercises[exerciseIndex]?.sets.length ?? 0;
 
@@ -280,7 +280,7 @@ export function useActiveWorkout(workoutId: string): ActiveWorkoutState {
     const nextExIdx = activeSession?.currentExerciseIndex ?? exerciseIndex;
     const nextSetIdx = activeSession?.currentSetIndex ?? setIndex;
     const nextExId = template?.exercises[nextExIdx]?.exerciseId ?? '';
-    const nextEx = exercises[nextExId];
+    const nextEx = getExercise(nextExId);
     const nextProg = progressions[nextExIdx];
     const nextTarget = nextProg?.sets[nextSetIdx];
 

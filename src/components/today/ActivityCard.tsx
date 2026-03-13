@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { ExerciseDetailSheet } from '@/components/workout/ExerciseDetailSheet';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
-import { exercises } from '@/data/exercises';
+import { getExercise, getAllExercisesMap } from '@/data/exerciseBank';
 import { usePlanStore } from '@/stores/usePlanStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { useWorkoutStore } from '@/stores/useWorkoutStore';
@@ -47,7 +47,7 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
 
   const volumeSummary = useMemo(() => {
     if (goal !== 'muscle_build') return null;
-    return getWeeklyVolumeSummary(workoutHistory, exercises);
+    return getWeeklyVolumeSummary(workoutHistory, getAllExercisesMap());
   }, [goal, workoutHistory]);
 
   if (state === 'no_plan') {
@@ -119,7 +119,7 @@ export function ActivityCard({ state, todayPlan, completedWorkout, completedRun 
 
         <View style={styles.exerciseList}>
           {template.exercises.slice(0, 5).map((ex, i) => {
-            const exData = exercises[ex.exerciseId];
+            const exData = getExercise(ex.exerciseId);
             const name = exData?.name ?? ex.exerciseId;
             const sets = ex.sets.length;
             const reps = ex.sets[0]

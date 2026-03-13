@@ -3,7 +3,7 @@ import { useUserStore } from '@/stores/useUserStore';
 import { usePlanStore } from '@/stores/usePlanStore';
 import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { useRunStore } from '@/stores/useRunStore';
-import { exercises } from '@/data/exercises';
+import { getExercise } from '@/data/exerciseBank';
 import { syncAllPending } from '@/services/sync';
 import type { Units } from '@/types/user';
 import type { MovementPattern } from '@/types/workout';
@@ -68,7 +68,7 @@ export function useProgress(): ProgressData {
     for (const pattern of TARGET_PATTERNS) {
       for (const id of planExerciseIds) {
         if (matched.has(id)) continue;
-        const ex = exercises[id];
+        const ex = getExercise(id);
         if (ex && ex.movementPattern === pattern) {
           matched.add(id);
           result.push({ exerciseId: id, title: ex.name });

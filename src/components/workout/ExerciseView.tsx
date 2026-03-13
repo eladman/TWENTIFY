@@ -12,7 +12,7 @@ import { fontFamilies } from '@/theme/typography';
 import { haptics } from '@/utils/haptics';
 import { formatReps } from '@/utils/formatters';
 import { getCitationsForExercise } from '@/data/citations';
-import { getAlternatives } from '@/data/exercises';
+import { getAlternatives } from '@/data/exerciseBank';
 import type { Exercise } from '@/types/workout';
 import type { ExerciseProgression } from '@/services/progressiveOverload';
 

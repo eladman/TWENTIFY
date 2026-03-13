@@ -17,7 +17,7 @@ import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
 import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { useUserStore } from '@/stores/useUserStore';
-import { exercises } from '@/data/exercises';
+import { getExercise, getAllExercisesMap } from '@/data/exerciseBank';
 import { citations } from '@/data/citations';
 import { formatVolume, formatWeight } from '@/utils/formatters';
 import { getWeeklyVolumeSets } from '@/utils/weeklyVolume';
@@ -162,7 +162,7 @@ export default function WorkoutSummaryScreen() {
         const previousWeight = getWorkingWeight(previousSets);
         if (previousWeight === 0) return null;
 
-        const exerciseData = exercises[ex.exerciseId];
+        const exerciseData = getExercise(ex.exerciseId);
         return {
           name: exerciseData?.name ?? ex.exerciseId,
           currentWeightKg: currentWeight,
@@ -197,7 +197,7 @@ export default function WorkoutSummaryScreen() {
   // ── Weekly volume for muscle_build ──────────────────────────────
   const weeklyVolume = useMemo(() => {
     if (goal !== 'muscle_build') return null;
-    return getWeeklyVolumeSets(history, exercises);
+    return getWeeklyVolumeSets(history, getAllExercisesMap());
   }, [goal, history]);
 
   const VOLUME_TARGET = 16; // sets per major muscle group per week

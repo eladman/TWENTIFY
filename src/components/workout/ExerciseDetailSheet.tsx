@@ -3,7 +3,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
-import { exercises, getAlternatives } from '@/data/exercises';
+import { getExercise, getAlternatives } from '@/data/exerciseBank';
 import { getCitationsForExercise } from '@/data/citations';
 
 interface ExerciseDetailSheetProps {
@@ -19,7 +19,7 @@ export function ExerciseDetailSheet({
 }: ExerciseDetailSheetProps) {
   if (!exerciseId) return null;
 
-  const exercise = exercises[exerciseId];
+  const exercise = getExercise(exerciseId);
   if (!exercise) return null;
 
   const citations = getCitationsForExercise(exerciseId);

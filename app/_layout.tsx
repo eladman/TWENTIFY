@@ -144,6 +144,10 @@ export default function RootLayout() {
           name="nutrition/index"
           options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 350 }}
         />
+        <Stack.Screen
+          name="plan/index"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 350 }}
+        />
       </Stack>
       <ToastRoot />
     </>

@@ -4,6 +4,7 @@ import { useWorkoutStore } from '@/stores/useWorkoutStore';
 import { useRunStore } from '@/stores/useRunStore';
 import { useNutritionStore } from '@/stores/useNutritionStore';
 import { usePlanStore } from '@/stores/usePlanStore';
+import { useCustomExercisesStore, type CustomExercise } from '@/stores/useCustomExercisesStore';
 import { generateUUID, isValidUUID } from '@/utils/uuid';
 import { toJson } from '@/types/database';
 import type { CompletedWorkout } from '@/types/workout';
@@ -183,6 +184,42 @@ export async function syncPlan(): Promise<void> {
   } catch {}
 }
 
+// ── Custom exercises ─────────────────────────────────────────────────────────
+
+export async function syncCustomExercise(exercise: CustomExercise): Promise<void> {
+  if (!isReady()) return;
+  try {
+    const userId = useUserStore.getState().authUserId!;
+    const { error } = await supabase!.from('exercises').upsert(
+      {
+        id: exercise.id,
+        name: exercise.name,
+        category: exercise.category,
+        movement_pattern: exercise.movementPattern,
+        primary_muscles: exercise.primaryMuscles,
+        secondary_muscles: exercise.secondaryMuscles,
+        equipment: exercise.equipment,
+        alternatives: exercise.alternatives,
+        citation_ids: exercise.citationIds,
+        instructions: exercise.instructions ?? null,
+        cues: exercise.cues,
+        user_id: userId,
+      },
+      { onConflict: 'id' },
+    );
+    if (!error) {
+      useCustomExercisesStore.getState().markExerciseSynced(exercise.id);
+    }
+  } catch {}
+}
+
+export async function syncDeleteCustomExercise(id: string): Promise<void> {
+  if (!isReady()) return;
+  try {
+    await supabase!.from('exercises').delete().eq('id', id);
+  } catch {}
+}
+
 // ── Sync all pending (retry queue) ────────────────────────────────────────────
 
 export async function syncAllPending(): Promise<void> {
@@ -194,6 +231,11 @@ export async function syncAllPending(): Promise<void> {
 
     const unsyncedRuns = useRunStore.getState().history.filter((r) => !r.synced);
     for (const r of unsyncedRuns) await syncRunSession(r);
+
+    const unsyncedExercises = Object.values(
+      useCustomExercisesStore.getState().customExercises,
+    ).filter((e) => !e.synced);
+    for (const e of unsyncedExercises) await syncCustomExercise(e);
 
     await syncNutritionCheckin(useNutritionStore.getState().todayCheckin);
     await syncPlan();
@@ -209,12 +251,13 @@ export async function pullFromCloud(): Promise<void> {
   try {
     const userId = useUserStore.getState().authUserId!;
 
-    const [workoutsRes, runsRes, checkinsRes, plansRes, profileRes] = await Promise.all([
+    const [workoutsRes, runsRes, checkinsRes, plansRes, profileRes, customExRes] = await Promise.all([
       supabase!.from('workout_sessions').select('*').eq('user_id', userId),
       supabase!.from('run_sessions').select('*').eq('user_id', userId),
       supabase!.from('nutrition_checkins').select('*').eq('user_id', userId),
       supabase!.from('plans').select('*').eq('user_id', userId).eq('is_active', true).single(),
       supabase!.from('user_profiles').select('*').eq('user_id', userId).single(),
+      supabase!.from('exercises').select('*').eq('user_id', userId),
     ]);
 
     if (workoutsRes.data) {
@@ -279,6 +322,36 @@ export async function pullFromCloud(): Promise<void> {
         heightCm: row.height_cm ?? undefined,
         sex: row.sex ?? undefined,
       });
+    }
+
+    if (customExRes.data) {
+      const pulled: Record<string, CustomExercise> = {};
+      for (const row of customExRes.data as any[]) {
+        pulled[row.id] = {
+          id: row.id,
+          name: row.name,
+          category: row.category,
+          movementPattern: row.movement_pattern ?? 'accessory',
+          primaryMuscles: row.primary_muscles ?? [],
+          secondaryMuscles: row.secondary_muscles ?? [],
+          equipment: row.equipment,
+          alternatives: row.alternatives ?? [],
+          citationIds: row.citation_ids ?? [],
+          instructions: row.instructions ?? '',
+          cues: row.cues ?? [],
+          defaultReps: { min: 8, max: 12 },
+          defaultSets: 3,
+          restSeconds: 90,
+          synced: true,
+        };
+      }
+      // Merge: keep local unsynced, add pulled
+      const local = useCustomExercisesStore.getState().customExercises;
+      const merged: Record<string, CustomExercise> = { ...pulled };
+      for (const [id, ex] of Object.entries(local)) {
+        if (!ex.synced) merged[id] = ex;
+      }
+      useCustomExercisesStore.getState().setCustomExercises(merged);
     }
 
   } catch {}

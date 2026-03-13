@@ -1,6 +1,6 @@
 import type { SetData, CompletedWorkout, ExerciseEquipment } from '@/types/workout';
 import type { FitnessLevel } from '@/types/user';
-import { exercises } from '@/data/exercises';
+import { getExercise } from '@/data/exerciseBank';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -22,13 +22,13 @@ export interface ExerciseProgression {
 // ── Helpers ────────────────────────────────────────────────────────
 
 function isLowerBody(exerciseId: string): boolean {
-  const exercise = exercises[exerciseId];
+  const exercise = getExercise(exerciseId);
   if (!exercise) return false;
   return exercise.movementPattern === 'squat' || exercise.movementPattern === 'hinge';
 }
 
 function isIsolation(exerciseId: string): boolean {
-  const exercise = exercises[exerciseId];
+  const exercise = getExercise(exerciseId);
   return exercise?.category === 'isolation';
 }
 
@@ -118,7 +118,7 @@ export function calculateNextSession(
   _fitnessLevel: FitnessLevel,
   equipment: ExerciseEquipment,
 ): ExerciseProgression {
-  const exercise = exercises[exerciseId];
+  const exercise = getExercise(exerciseId);
   const repRange = exercise
     ? { min: exercise.defaultReps.min, max: exercise.defaultReps.max }
     : { min: 6, max: 8 };
@@ -274,7 +274,7 @@ export function getTargetsForWorkout(
     const previousSessions = history.slice(1);
 
     // Use the exercise's own equipment type if available, otherwise fall back to global
-    const exerciseData = exercises[we.exerciseId];
+    const exerciseData = getExercise(we.exerciseId);
     const exerciseEquipment = exerciseData ? exerciseData.equipment : equipment;
 
     return calculateNextSession(

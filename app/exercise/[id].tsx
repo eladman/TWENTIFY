@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme/colors';
 import { spacing, screenPadding } from '@/theme/spacing';
-import { exercises, getAlternatives } from '@/data/exercises';
+import { getExercise, getAlternatives, isCustomExercise } from '@/data/exerciseBank';
 import { getCitationsForExercise } from '@/data/citations';
 import { analytics } from '@/services/analytics';
 
@@ -13,7 +13,7 @@ export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const exercise = id ? exercises[id] : null;
+  const exercise = id ? getExercise(id) : null;
 
   if (!exercise) {
     return (
@@ -57,9 +57,17 @@ export default function ExerciseDetailScreen() {
       >
         <Text variant="heading.xl">{exercise.name}</Text>
 
-        <Text variant="body.md" style={styles.section}>
-          {exercise.instructions}
-        </Text>
+        {id && isCustomExercise(id) && (
+          <View style={styles.customBadge}>
+            <Text variant="caption" color={colors.accent}>Custom Exercise</Text>
+          </View>
+        )}
+
+        {exercise.instructions ? (
+          <Text variant="body.md" style={styles.section}>
+            {exercise.instructions}
+          </Text>
+        ) : null}
 
         {exercise.cues.length > 0 && (
           <View style={styles.section}>
@@ -135,6 +143,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: screenPadding.horizontal,
     paddingBottom: spacing['3xl'],
+  },
+  customBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 9999,
+    backgroundColor: colors.accentLight,
+    marginTop: spacing.sm,
   },
   section: {
     marginTop: spacing.lg,

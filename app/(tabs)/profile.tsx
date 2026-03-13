@@ -200,6 +200,13 @@ export default function ProfileScreen() {
           />
         </Card>
         <Button
+          variant="secondary"
+          label="View & Edit Plan"
+          onPress={() => router.push('/plan')}
+          fullWidth
+          style={styles.editPlanButton}
+        />
+        <Button
           variant="text"
           label="Reset plan"
           onPress={handleResetPlan}
@@ -376,6 +383,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginTop: spacing.xl,
     marginBottom: spacing.md,
+  },
+  editPlanButton: {
+    marginTop: spacing.md,
   },
   textButton: {
     marginTop: spacing.sm,
